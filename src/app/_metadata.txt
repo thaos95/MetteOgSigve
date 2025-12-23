@@ -1,0 +1,1 @@
+This project is a scaffold for a wedding site. Replace this file with actual metadata and SEO configuration as you customize the site.

@@ -1,0 +1,1 @@
+Place your placeholder images and PDFs here (e.g. public/assets/). The PDFs you mentioned can be stored in public/pdfs and used for inspiration. When ready, replace placeholder elements with actual pictures or gallery components.
