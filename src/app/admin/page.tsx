@@ -80,9 +80,8 @@ export default function AdminPage() {
           </form>
 
           <div className="mt-4">
-            <p className="text-sm text-gray-600">You can create the `rsvps` table here if it doesn't exist.</p>
-            <button onClick={createTable} className="mt-2 px-3 py-2 bg-gray-800 text-white rounded">Create table</button>
-            <button onClick={removeSentinel} className="ml-2 mt-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
+            <p className="text-sm text-gray-600">Table creation is disabled for safety. Use the Supabase SQL editor or remove the sentinel to enable creation again.</p>
+            <button onClick={removeSentinel} className="mt-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
           </div>
         </div>
       ) : (

@@ -40,33 +40,39 @@ export async function POST(req: Request) {
     // Stricter duplicate heuristics
     const normName = normalizeName(name);
     const nameParts = normName.split(' ').filter(Boolean);
-    const checks: any[] = [];
 
+    // 1) Exact email match (strong indicator)
     if (email) {
-      // exact email match
-      checks.push({ type: 'email', query: supabaseServer.from('rsvps').select('id,name,email').eq('email', email).limit(1) });
-    }
-
-    // exact case-insensitive name match
-    checks.push({ type: 'name_exact', query: supabaseServer.from('rsvps').select('id,name,email').ilike('name', name) });
-
-    // partial token matches (first and last name)
-    if (nameParts.length) {
-      const first = escapeLike(nameParts[0]);
-      checks.push({ type: 'first', query: supabaseServer.from('rsvps').select('id,name,email').ilike('name', `%${first}%`).limit(1) });
-      if (nameParts.length > 1) {
-        const last = escapeLike(nameParts[nameParts.length - 1]);
-        checks.push({ type: 'last', query: supabaseServer.from('rsvps').select('id,name,email').ilike('name', `%${last}%`).limit(1) });
-      }
-    }
-
-    for (const c of checks) {
-      const res = await c.query;
+      const res = await supabaseServer.from('rsvps').select('id,name,email').eq('email', email).limit(1);
       if (res.error) return NextResponse.json({ error: res.error.message }, { status: 500 });
-      if (res.data && res.data.length > 0) {
-        return NextResponse.json({ error: 'An RSVP with this name or email appears to exist' }, { status: 409 });
-      }
+      if (res.data && res.data.length > 0) return NextResponse.json({ error: 'An RSVP with this email already exists' }, { status: 409 });
     }
+
+    // 2) If name has at least first and last token, require both tokens to appear in an existing name (stricter)
+    if (nameParts.length > 1) {
+      const first = escapeLike(nameParts[0]);
+      const last = escapeLike(nameParts[nameParts.length - 1]);
+      // check for a record where name contains both tokens
+      const both = await supabaseServer
+        .from('rsvps')
+        .select('id,name,email')
+        .ilike('name', `%${first}%`)
+        .ilike('name', `%${last}%`)
+        .limit(1);
+      if (both.error) return NextResponse.json({ error: both.error.message }, { status: 500 });
+      if (both.data && both.data.length > 0) return NextResponse.json({ error: 'An RSVP with this name appears to exist' }, { status: 409 });
+    } else if (nameParts.length === 1) {
+      // fallback: single token match (first or surname)
+      const token = escapeLike(nameParts[0]);
+      const tokenRes = await supabaseServer.from('rsvps').select('id,name,email').ilike('name', `%${token}%`).limit(1);
+      if (tokenRes.error) return NextResponse.json({ error: tokenRes.error.message }, { status: 500 });
+      if (tokenRes.data && tokenRes.data.length > 0) return NextResponse.json({ error: 'An RSVP with this name appears to exist' }, { status: 409 });
+    }
+
+    // 3) Also check for exact (case-insensitive) name match as final guard
+    const exact = await supabaseServer.from('rsvps').select('id,name,email').ilike('name', name).limit(1);
+    if (exact.error) return NextResponse.json({ error: exact.error.message }, { status: 500 });
+    if (exact.data && exact.data.length > 0) return NextResponse.json({ error: 'An RSVP with this name already exists' }, { status: 409 });
 
     const { error } = await supabaseServer.from("rsvps").insert({ name, email, attending, guests, notes });
 
