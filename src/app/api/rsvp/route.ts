@@ -74,10 +74,48 @@ export async function POST(req: Request) {
     if (exact.error) return NextResponse.json({ error: exact.error.message }, { status: 500 });
     if (exact.data && exact.data.length > 0) return NextResponse.json({ error: 'An RSVP with this name already exists' }, { status: 409 });
 
-    const { error } = await supabaseServer.from("rsvps").insert({ name, email, attending, guests, notes });
+    const { data: inserted, error } = await supabaseServer.from("rsvps").insert({ name, email, attending, guests, notes }).select('*');
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true });
+
+    // Send confirmation email to guest if email provided, and BCC site owner
+    try {
+      if (email) {
+        const nodemailer = await import('nodemailer');
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
+          secure: (process.env.SMTP_SECURE === 'true') || false,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+          }
+        });
+
+        const html = `<p>Hi ${name},</p>
+          <p>Thanks — your RSVP has been recorded.</p>
+          <ul>
+            <li><strong>Attending:</strong> ${attending ? 'Yes' : 'No'}</li>
+            <li><strong>Guests:</strong> ${guests}</li>
+            <li><strong>Notes:</strong> ${notes ?? ''}</li>
+          </ul>
+          <p>See you soon — Mette & Sigve</p>`;
+
+        await transporter.sendMail({
+          from: process.env.FROM_EMAIL,
+          to: email,
+          bcc: process.env.FROM_EMAIL,
+          subject: 'Mette & Sigve — RSVP confirmation',
+          text: `Thanks ${name}, your RSVP has been recorded. Attending: ${attending ? 'Yes' : 'No'}. Guests: ${guests}.`,
+          html,
+        });
+      }
+    } catch (mailErr) {
+      // Log but don't fail the request
+      console.error('Mail error', mailErr);
+    }
+
+    return NextResponse.json({ ok: true, rsvp: inserted?.[0] });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 });
   }

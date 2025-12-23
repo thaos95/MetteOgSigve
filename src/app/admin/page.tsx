@@ -50,12 +50,16 @@ export default function AdminPage() {
     if (res.ok) alert(data.message ?? 'Removed'); else alert(data.error ?? 'Failed');
   }
 
+  const [filterAttending, setFilterAttending] = useState<'all'|'yes'|'no'>('all');
+  const [filterFrom, setFilterFrom] = useState('');
+  const [filterTo, setFilterTo] = useState('');
+
   async function exportCSV(e?: React.FormEvent) {
     e?.preventDefault();
     const res = await fetch('/api/admin/export-rsvps', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password, attending: filterAttending, from: filterFrom || undefined, to: filterTo || undefined }),
     });
     if (!res.ok) { const data = await res.json(); alert(data.error ?? 'Export failed'); return; }
     const blob = await res.blob();
@@ -88,7 +92,14 @@ export default function AdminPage() {
         <div className="mt-4">
           <div className="flex items-center justify-between">
             <h3 className="font-medium">RSVPs</h3>
-            <div>
+            <div className="flex items-center gap-2">
+              <select value={filterAttending} onChange={e => setFilterAttending(e.target.value as any)} className="p-2 border rounded">
+                <option value="all">All</option>
+                <option value="yes">Attending</option>
+                <option value="no">Not attending</option>
+              </select>
+              <input type="date" value={filterFrom} onChange={e => setFilterFrom(e.target.value)} className="p-2 border rounded" />
+              <input type="date" value={filterTo} onChange={e => setFilterTo(e.target.value)} className="p-2 border rounded" />
               <button onClick={exportCSV} className="px-3 py-2 bg-blue-600 text-white rounded">Export CSV</button>
               <button onClick={removeSentinel} className="ml-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
             </div>

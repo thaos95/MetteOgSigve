@@ -18,7 +18,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    const { data, error } = await supabaseServer.from('rsvps').select('*').order('created_at', { ascending: false });
+    // Apply optional filters: attending (all|yes|no), from/to dates (ISO)
+    const attending = body?.attending; // 'all' | 'yes' | 'no'
+    const from = body?.from; const to = body?.to;
+
+    let q = supabaseServer.from('rsvps').select('*');
+    if (attending === 'yes') q = q.eq('attending', true);
+    if (attending === 'no') q = q.eq('attending', false);
+    if (from) q = q.gte('created_at', from);
+    if (to) q = q.lte('created_at', to);
+    q = q.order('created_at', { ascending: false });
+
+    const { data, error } = await q;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     const rows = data ?? [];
