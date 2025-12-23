@@ -85,6 +85,7 @@ export async function POST(req: Request) {
     } catch (mailErr) {
       console.error('Mail error', mailErr);
       if (process.env.NODE_ENV === 'production') return NextResponse.json({ error: 'failed to schedule email' }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
