@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
 
-export async function PUT(req: Request, { params }: { params: { id: string } } = { params: { id: undefined } }) {
+export async function PUT(req: Request, ctx: any) {
   try {
-    // Resolve id from params; in some dev setups params may be empty, so fall back to parsing the URL only in non-production
-    let id = params?.id;
+    // Resolve id from params; in some dev setups params may be a Promise and must be awaited
+    let id: string | undefined;
+    try {
+      const params = ctx?.params;
+      if (params && typeof (params as any).then === 'function') {
+        const resolved = await params;
+        id = resolved?.id;
+      } else {
+        id = params?.id;
+      }
+    } catch (e) {
+      console.warn('Could not resolve params synchronously, falling back to URL parsing');
+    }
+
     if (!id && process.env.NODE_ENV !== 'production') {
       const url = new URL(req.url);
       id = url.pathname.split('/').filter(Boolean).pop();

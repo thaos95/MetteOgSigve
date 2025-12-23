@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
+import { verifyRecaptchaToken } from '../../../../lib/recaptcha';
+import { isRateLimited } from '../../../../lib/rateLimit';
 import crypto from 'crypto';
+const now = ()=>new Date().toISOString();
+const log = (...args: any[])=>console.log('[request-token]', now(), ...args);
 
 export async function POST(req: Request) {
   try {
@@ -25,9 +29,13 @@ export async function POST(req: Request) {
       if (enable) {
         const captchaToken = body.recaptchaToken;
         if (!captchaToken) return NextResponse.json({ error: 'recaptcha required' }, { status: 400 });
-        const verified = await verifyRecaptchaToken(captchaToken, 'request-token');
-        if (!verified.success || (verified.score !== undefined && verified.score < 0.5)) {
-          return NextResponse.json({ error: 'recaptcha failed' }, { status: 429 });
+        if (typeof verifyRecaptchaToken !== 'function') {
+          console.error('recaptcha check error: verifyRecaptchaToken not available');
+        } else {
+          const verified = await verifyRecaptchaToken(captchaToken, 'request-token');
+          if (!verified.success || (verified.score !== undefined && verified.score < 0.5)) {
+            return NextResponse.json({ error: 'recaptcha failed' }, { status: 429 });
+          }
         }
       }
     } catch (e) { console.error('recaptcha check error', e); }
@@ -35,12 +43,16 @@ export async function POST(req: Request) {
     try {
       const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
       const ipKey = `rl:tok:req:ip:${ip}`;
-      const rIp = await isRateLimited(ipKey, Number(process.env.RL_TOKEN_REQ_PER_IP || 20), Number(process.env.RL_TOKEN_REQ_WINDOW || 3600));
-      if (rIp.limited) return NextResponse.json({ error: 'rate limit exceeded (ip)' }, { status: 429, headers: { 'Retry-After': String(rIp.retryAfter) } });
-      if (email) {
-        const emailKey = `rl:tok:req:email:${email}`;
-        const rEmail = await isRateLimited(emailKey, Number(process.env.RL_TOKEN_REQ_PER_EMAIL || 5), Number(process.env.RL_TOKEN_REQ_WINDOW_EMAIL || 3600));
-        if (rEmail.limited) return NextResponse.json({ error: 'rate limit exceeded (email)' }, { status: 429, headers: { 'Retry-After': String(rEmail.retryAfter) } });
+      if (typeof isRateLimited !== 'function') {
+        console.error('rate limit check error: isRateLimited not available');
+      } else {
+        const rIp = await isRateLimited(ipKey, Number(process.env.RL_TOKEN_REQ_PER_IP || 20), Number(process.env.RL_TOKEN_REQ_WINDOW || 3600));
+        if (rIp.limited) return NextResponse.json({ error: 'rate limit exceeded (ip)' }, { status: 429, headers: { 'Retry-After': String(rIp.retryAfter) } });
+        if (email) {
+          const emailKey = `rl:tok:req:email:${email}`;
+          const rEmail = await isRateLimited(emailKey, Number(process.env.RL_TOKEN_REQ_PER_EMAIL || 5), Number(process.env.RL_TOKEN_REQ_WINDOW || 3600));
+          if (rEmail.limited) return NextResponse.json({ error: 'rate limit exceeded (email)' }, { status: 429, headers: { 'Retry-After': String(rEmail.retryAfter) } });
+        }
       }
     } catch (e) { console.error('rate limit check error', e); }
 
@@ -60,11 +72,16 @@ export async function POST(req: Request) {
 
     // send token email
     try {
-      const { sendMail } = await import('../../../lib/mail');
+      const { sendMail } = await import('../../../../lib/mail');
       const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || ''}/rsvp?token=${token}`;
       const html = `<p>Hi ${rsv.name},</p><p>Use the secure link below to ${purpose === 'cancel' ? 'cancel' : 'edit'} your RSVP. The link expires in 1 hour.</p><p><a href="${link}">Open RSVP</a></p>`;
       await sendMail({ to: rsv.email ?? rsv.email, subject: 'Mette & Sigve — RSVP secure link', text: `Open your RSVP: ${link}`, html });
-    } catch (mailErr) { console.error('Mail error', mailErr); }
+      log('Sent token email for rsvp_id', rsv.id);
+    } catch (mailErr) {
+      console.error('Mail error', mailErr);
+      // In production, treat a mail failure as an error; in development, continue but log more info
+      if (process.env.NODE_ENV === 'production') return NextResponse.json({ error: 'failed to send email' }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {

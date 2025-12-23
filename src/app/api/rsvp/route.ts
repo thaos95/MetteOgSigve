@@ -123,7 +123,8 @@ export async function POST(req: Request) {
         // For local testing, log the raw token (do not enable in production)
         if (process.env.NODE_ENV !== 'production') console.log('DEV verify token:', token);
 
-        const { sendMail } = await import('../../../lib/mail');
+        const mod = await import('../../../../lib/mail');
+        const sendMail = mod?.sendMail;
         const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || ''}/rsvp?token=${token}`;
         const html = `<p>Hi ${name},</p>
           <p>Thanks — your RSVP has been recorded. Please <a href="${link}">verify your email</a> to confirm. This link expires in 1 hour.</p>
@@ -134,8 +135,12 @@ export async function POST(req: Request) {
           </ul>
           <p>If you want to edit or cancel you can use the request token flow once verified.</p>
           <p>See you soon — Mette & Sigve</p>`;
-        const res = await sendMail({ to: email, subject: 'Mette & Sigve — Verify your RSVP', text: `Please verify your RSVP: ${link}`, html });
-        if (!res.ok) console.error('Mail send failed', res);
+        if (typeof sendMail === 'function') {
+          const res = await sendMail({ to: email, subject: 'Mette & Sigve — Verify your RSVP', text: `Please verify your RSVP: ${link}`, html });
+          if (!res?.ok) console.error('Mail send failed', res);
+        } else {
+          console.warn('sendMail not available; skipping email send in this environment');
+        }
       }
     } catch (mailErr) {
       console.error('Mail error', mailErr);
