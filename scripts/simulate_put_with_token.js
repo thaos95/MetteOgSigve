@@ -2,6 +2,8 @@ require('dotenv').config({ path: '.env.local' });
 process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
 const { Client } = require('pg');
 const nodemailer = require('nodemailer');
+const now = ()=>new Date().toISOString();
+const log = (...args)=>console.log('[simulate_put_with_token]', now(), ...args);
 (async ()=>{
   try {
     const client = new Client({ connectionString: process.env.POSTGRES_URL, ssl: { rejectUnauthorized: false } });
@@ -27,15 +29,15 @@ const nodemailer = require('nodemailer');
     const transport = nodemailer.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT || 587), secure: (process.env.SMTP_SECURE === 'true'), auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined });
     try {
       const info = await transport.sendMail({ from: process.env.FROM_EMAIL || process.env.SMTP_USER, to: 'testx@example.com', subject: 'RSVP updated (simulated)', text: 'Your RSVP was updated.' });
-      console.log('Email send info:', info && (info.accepted || info.response) ? 'sent' : info);
-    } catch (e) { console.error('Email send failed (expected in many cases):', e.message); }
+      log('Email send info:', info && (info.accepted || info.response) ? 'sent' : info);
+    } catch (e) { log('Email send failed (expected in many cases):', e.message); }
 
     // confirm updates
     const r = await client.query('select id,name,email,notes from public.rsvps where id=$1', [id]);
     const t = await client.query('select id,token,used from public.rsvp_tokens where id=$1', [row.id]);
-    console.log('rsvp now:', r.rows[0]);
-    console.log('token now:', t.rows[0]);
+    log('rsvp now:', r.rows[0]);
+    log('token now:', t.rows[0]);
     await client.end();
     process.exit(0);
-  } catch (err) { console.error('Error:', err.message || err); process.exit(1); }
+  } catch (err) { console.error('[simulate_put_with_token]', now(), err.message || err); process.exit(1); }
 })();

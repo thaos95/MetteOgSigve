@@ -2,6 +2,8 @@ require('dotenv').config({ path: '.env.local' });
 const { Client } = require('pg');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const now = ()=>new Date().toISOString();
+const log = (...args)=>console.log('[request_token_and_send]', now(), ...args);
 (async ()=>{
   try {
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -19,14 +21,14 @@ const nodemailer = require('nodemailer');
       res = await client.query(`select id,name,email from public.rsvps limit 1`);
     }
     const r = res.rows[0];
-    console.log('Using RSVP:', r);
+    log('Using RSVP:', r);
 
     const token = crypto.randomBytes(20).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const expires_at = new Date(Date.now()+1000*60*60).toISOString();
 
     await client.query('insert into public.rsvp_tokens(rsvp_id, token_hash, purpose, expires_at) values($1,$2,$3,$4)', [r.id, tokenHash, 'edit', expires_at]);
-    console.log('Inserted token:', token);
+    log('Inserted token (raw):', token);
 
     // Send email via nodemailer using SMTP config
     const transport = nodemailer.createTransport({
@@ -36,7 +38,7 @@ const nodemailer = require('nodemailer');
       auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
     });
 
-    const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000'}/rsvp?token=${token}`;
+    const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000'}/rsvp?token=${token}`;
     const mailOptions = {
       from: process.env.FROM_EMAIL || process.env.SMTP_USER,
       to: r.email,
@@ -45,14 +47,23 @@ const nodemailer = require('nodemailer');
       html: `<p>Hi ${r.name},</p><p>Open your RSVP: <a href="${link}">${link}</a></p>`
     };
 
-    const info = await transport.sendMail(mailOptions);
-    console.log('Email send result:', info && (info.accepted || info.response) ? 'sent' : info);
+    let info;
+    try {
+      info = await transport.sendMail(mailOptions);
+      log('Email send result:', info && (info.accepted || info.response) ? 'sent' : info);
+    } catch (e) {
+      log('Email send failed:', e.message);
+    }
 
     // verify token exists
     const tRes = await client.query('select id,rsvp_id,token_hash,purpose,used,expires_at from public.rsvp_tokens where token_hash=$1', [tokenHash]);
-    console.log('Token row:', tRes.rows[0]);
+    if (!tRes || !tRes.rows || !tRes.rows[0]) {
+      log('Token row not found for tokenHash');
+    } else {
+      log('Token row:', tRes.rows[0]);
+    }
 
     await client.end();
     process.exit(0);
-  } catch (err) { console.error('Error:', err); process.exit(1); }
+  } catch (err) { console.error('[request_token_and_send]', now(), err); process.exit(1); }
 })();

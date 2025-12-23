@@ -31,9 +31,17 @@ const fetch = globalThis.fetch ? globalThis.fetch.bind(globalThis) : (...args) =
     // 4) Request an edit token via API (should now be allowed). Retry briefly if verification hasn't propagated yet.
     let requestRes;
     for (let i=0;i<6;i++){
-      requestRes = await fetch((process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000') + '/api/rsvp/request-token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, purpose: 'edit' }) });
+      requestRes = await fetch((process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000') + '/api/rsvp/request-token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, purpose: 'edit', recaptchaToken: 'test-token' }) });
+      if (!requestRes) {
+        await new Promise(r=>setTimeout(r, 500));
+        continue;
+      }
       if (requestRes.status === 200) break;
       await new Promise(r=>setTimeout(r, 500));
+    }
+    if (!requestRes) {
+      console.error('request-token: no response received after retries');
+      process.exit(1);
     }
     console.log('request-token response status', requestRes.status);
     // 5) Insert an edit token directly (since email sending may not work in dev) and use it to update

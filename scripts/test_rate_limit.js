@@ -1,4 +1,6 @@
 require('dotenv').config({ path: '.env.local' });
+const now = ()=>new Date().toISOString();
+const log = (...args)=>console.log('[test_rate_limit]', now(), ...args);
 (async ()=>{
   try {
     const { Redis } = require('@upstash/redis');
@@ -12,12 +14,16 @@ require('dotenv').config({ path: '.env.local' });
     const limit = 3;
     const window = 5;
     for (let i = 0; i < 6; i++) {
-      const cur = await redis.incr(key);
-      if (cur === 1) await redis.expire(key, window);
-      console.log('count', cur);
+      try {
+        const cur = await redis.incr(key);
+        if (cur === 1) await redis.expire(key, window);
+        log('count', cur);
+      } catch (e) {
+        log('redis operation failed on iteration', i, e.message);
+      }
       await new Promise(r => setTimeout(r, 200));
     }
-    await redis.del(key);
+    try { await redis.del(key); } catch(e){ log('failed to delete key', e.message); }
     process.exit(0);
-  } catch (err) { console.error(err); process.exit(1); }
+  } catch (err) { console.error('[test_rate_limit]', now(), err); process.exit(1); }
 })();

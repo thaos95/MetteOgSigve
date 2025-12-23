@@ -62,6 +62,27 @@ A minimal password-protected admin page is included (set `ADMIN_PASSWORD`) which
 - During local development you may see dynamic route `params` being empty inside App Router API route handlers in some dev setups. The project includes a safe fallback: when `params` aren't populated the handler extracts the `id` from the request URL (this fallback is only enabled in development).
 - Avoid committing temporary debug routes (e.g., `src/app/api/rsvp/[id]/inspect`) — they are helpful for troubleshooting but should be removed before deploying.
 - To test token flows locally, you can use the provided scripts in `scripts/` (e.g., `request_token_and_send.js`, `simulate_put_with_token.js`, `test_request_token.js`) or call the endpoints directly: `POST /api/rsvp/request-token` and `GET /api/rsvp/verify-token`.
+- **Note:** Test scripts have been hardened with defensive response handling and timestamped logging to improve reliability and diagnostics (e.g., `node scripts/full_verification_flow.js`).
+
+## Recommended dev workflow (Windows)
+- Start the dev server in a dedicated terminal so it runs independently:
+  - Recommended: open a PowerShell/CMD window and run `npm run dev:win` (this opens a new `cmd` window running `npm run dev`).
+  - Alternatively, run `start cmd /k "npm run dev"` from the project root.
+- Always open a second terminal to run tests or other commands. Confirm the dev server is running before performing actions by checking:
+  - `curl -I http://localhost:3000/` (HTTP 200 expected) or
+  - `netstat -ano | findstr :3000` and check the node process PID.
+- This prevents accidental stopping of the dev server when running other commands in the same terminal.
+
+## Enabling reCAPTCHA (production / Vercel)
+- Steps to enable production CAPTCHA (recommended order):
+  1. Create reCAPTCHA v3 credentials in Google (site key + secret).
+  2. Add the following Environment Variables in Vercel (Project > Settings > Environment Variables):
+     - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` (set for Production & Preview as public)
+     - `RECAPTCHA_SECRET` (set for Production & Preview — server-only)
+     - `FEATURE_ENABLE_CAPTCHA=true` (optional: enforce CAPTCHA even if keys present)
+  3. Deploy or redeploy. The frontend will load grecaptcha (v3) with the site key, and the server will validate tokens. Start with Preview or a branch to test before enforcing globally.
+- You can also enable `FEATURE_ENABLE_CAPTCHA` locally in `.env.local` to test enforcement, but prefer adding the real keys in Vercel for live verification and then toggle enforcement.
+
 
 ## Email verification
 - RSVPs created with an email are created as `verified=false` and a verification email is sent containing a secure single-use link. Use `GET /api/rsvp/verify-token?token=<token>` to verify and set `verified=true`.
