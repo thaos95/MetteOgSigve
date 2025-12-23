@@ -1,0 +1,27 @@
+name: SendGrid Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-sendgrid:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps
+        run: npm ci
+      - name: Run SendGrid test
+        env:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          TEST_TO_EMAIL: ${{ secrets.TEST_TO_EMAIL }}
+        run: |
+          if [ -z "$SENDGRID_API_KEY" ]; then
+            echo "SENDGRID_API_KEY not provided as secret; skipping test";
+            exit 1;
+          fi
+          node scripts/test_sendgrid_send.js

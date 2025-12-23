@@ -49,7 +49,22 @@ Optional (anti-abuse and email delivery):
 - `RL_TOKEN_REQ_PER_EMAIL` - token requests per email (default 5)
 - `RL_TOKEN_REQ_WINDOW` - window in seconds for token request limits (default 3600)
 - `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`) — Upstash REST URL and token for rate limiting
-- `SENDGRID_API_KEY` - optional SendGrid key for production email delivery (recommended over SMTP for reliability). To test locally, add `SENDGRID_API_KEY` and `TEST_TO_EMAIL` to `.env.local` and run `node scripts/test_sendgrid_send.js`. In Vercel, add `SENDGRID_API_KEY` and `FROM_EMAIL` to Project > Settings > Environment Variables and deploy.
+- **`SENDGRID_API_KEY`** - optional SendGrid key for production email delivery (recommended over SMTP for reliability). To test locally, add `SENDGRID_API_KEY` and `TEST_TO_EMAIL` to `.env.local` and run `node scripts/test_sendgrid_send.js`. In Vercel, add `SENDGRID_API_KEY` and `FROM_EMAIL` to Project > Settings > Environment Variables and deploy.
+
+**SendGrid / Email setup checklist**
+
+1. Create a SendGrid account and generate a **Full Access** or **Mail Send** API Key.
+2. Add the key to your development `.env.local` as `SENDGRID_API_KEY` (do not commit this file).
+3. Add the same key to your Vercel project env (Project > Settings > Environment Variables):
+   - `SENDGRID_API_KEY` (Production & Preview)
+   - `FROM_EMAIL` (Production & Preview)
+   - Optionally add `TEST_TO_EMAIL` for CI/local tests
+4. (Recommended) Configure Sender Authentication (Domain) in SendGrid and add the provided SPF/DKIM DNS records at your domain registrar to improve deliverability (SPF/DKIM setup usually takes a few minutes to a few hours to propagate).
+5. Test locally: `node scripts/test_sendgrid_send.js` (it will use `FROM_EMAIL` / `TEST_TO_EMAIL` if present and log the result).
+
+**Notes**
+- If you prefer Gmail in development, you can keep SMTP settings in `.env.local` (use an App Password with 2FA) — we already support that fallback in `src/lib/mail.ts`.
+- For deployment on Vercel, prefer using SendGrid and set the env vars in the project settings. You can also use the GitHub Action below to run a manual SendGrid send test against the deployment or your own test address.
 
 Notes on security and policies
 - Keep the **Service Role** key secret (set it as a server-only env var in Vercel); server-side code uses this key and bypasses RLS.  
