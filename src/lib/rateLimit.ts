@@ -9,11 +9,15 @@ const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_R
 let redis: Redis | null = null;
 if (process.env.NODE_ENV !== 'production') console.log('rateLimit init, envs:', { REDIS_URL, REDIS_TOKEN, KV_REST_API_URL: process.env.KV_REST_API_URL, KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN });
 
-if (REDIS_URL && REDIS_TOKEN) {
-  redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN });
-} else if (REDIS_URL) {
-  // Try to parse user:pass@host style URL to find token
-  try {
+try {
+  // Prefer the SDK helper which reads env (KV_REST_API_URL / KV_REST_API_TOKEN or UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN)
+  if (typeof (Redis as any).fromEnv === 'function') {
+    redis = (Redis as any).fromEnv();
+  } else if (REDIS_URL && REDIS_TOKEN) {
+    // explicit REST url + token
+    redis = new Redis({ url: REDIS_URL, token: REDIS_TOKEN });
+  } else if (REDIS_URL) {
+    // Try to parse user:pass@host style URL to find token
     const u = new URL(REDIS_URL);
     const token = u.password || REDIS_TOKEN;
     // Upstash expects an HTTPS REST URL (not redis:// or rediss://). Convert if necessary.
@@ -31,10 +35,10 @@ if (REDIS_URL && REDIS_TOKEN) {
       // cast to any to satisfy typing for tokenless REST usage
       redis = new Redis({ url: restUrl, token: token || undefined } as any);
     }
-  } catch (e) {
-    console.error('Could not initialize Upstash Redis client', e);
-    redis = null;
   }
+} catch (e) {
+  console.error('Could not initialize Upstash Redis client', e);
+  redis = null;
 }
 
 export async function isRateLimited(key: string, limit: number, windowSeconds: number) {
