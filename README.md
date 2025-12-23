@@ -45,6 +45,29 @@ Notes on security and policies
 ## Admin
 A minimal password-protected admin page is included (set `ADMIN_PASSWORD`) which sends the password in the POST body to `/api/admin/rsvps`. This is convenient for a personal site; for production consider proper authentication (Supabase Auth, OAuth, or Vercel password protection).
 
+## CSV backups & scheduling
+You can export RSVPs as CSV from the admin UI (Export CSV button) or email the CSV via `/api/admin/email-rsvps` (POST body: `{ "password": "...", "to": "you@example.com" }`). The email endpoint requires SMTP configuration via environment variables:
+
+- `SMTP_HOST` - SMTP server host
+- `SMTP_PORT` - optional (default 587)
+- `SMTP_SECURE` - optional, 'true' if using TLS on connect
+- `SMTP_USER` - SMTP username
+- `SMTP_PASS` - SMTP password
+- `FROM_EMAIL` - the `from:` address for sent emails
+
+For scheduled backups, configure a scheduled job (Vercel Cron, GitHub Actions, or any scheduler) that POSTs to `/api/admin/email-rsvps` with the admin password and destination email. Example curl (use a secret runner):
+
+```
+curl -X POST https://<your-deployment>/api/admin/email-rsvps \
+  -H "Content-Type: application/json" \
+  -d '{ "password": "<ADMIN_PASSWORD>", "to": "you@yourdomain.com" }'
+```
+
+If you prefer automatic backups handled by a 3rd-party, configure jobs to call the endpoint and keep SMTP secrets in your project environment.
+
+---
+
+
 ---
 
 This scaffold includes:
