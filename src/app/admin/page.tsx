@@ -8,7 +8,11 @@ export default function AdminPage() {
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
-    const res = await fetch(`/api/admin/rsvps?password=${encodeURIComponent(password)}`);
+    const res = await fetch(`/api/admin/rsvps`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
     if (res.ok) {
       const data = await res.json();
       setRsvps(data.rsvps ?? []);

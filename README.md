@@ -11,6 +11,7 @@ This is a simple Next.js scaffold for a wedding site with RSVP handling using Su
 Create a table for RSVPs. Example SQL:
 
 ```sql
+-- optional extension for UUID generation
 create extension if not exists pgcrypto;
 
 create table rsvps (
@@ -22,12 +23,27 @@ create table rsvps (
   notes text,
   created_at timestamptz default now()
 );
+
+-- (recommended) enable RLS to prevent public reads/writes from the client
+alter table rsvps enable row level security;
+
+-- Do NOT add a "public can read" policy unless you want rsvps visible to everyone.
+-- The server uses the Service Role key (which bypasses RLS) for admin operations.
 ```
 
-Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` and in Vercel.
+Environment variables to set (locally in `.env.local`, and in Vercel Project Env):
+- `NEXT_PUBLIC_SUPABASE_URL` (public)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public)
+- `SUPABASE_URL` (server-side; recommended)
+- `SUPABASE_SERVICE_ROLE_KEY` (secret — server-only)
+- `ADMIN_PASSWORD` (secret — used by local admin page login)
+
+Notes on security and policies
+- Keep the **Service Role** key secret (set it as a server-only env var in Vercel); server-side code uses this key and bypasses RLS.  
+- For privacy, it's recommended to keep `rsvps` locked (RLS enabled) and do all reads/writes via server API routes that authenticate with the Service Role key (as this scaffold already does).
 
 ## Admin
-A minimal password-protected admin page is included (set `ADMIN_PASSWORD`), which fetches RSVPs via a server API route that uses the service role key.
+A minimal password-protected admin page is included (set `ADMIN_PASSWORD`) which sends the password in the POST body to `/api/admin/rsvps`. This is convenient for a personal site; for production consider proper authentication (Supabase Auth, OAuth, or Vercel password protection).
 
 ---
 
