@@ -52,3 +52,12 @@ export async function sendMail(opts: SendOptions) {
 
   return { ok: false, error: lastErr?.message ?? String(lastErr) };
 }
+
+// Non-blocking wrapper: call sendMail but don't await in the request path
+export function sendMailAsync(opts: SendOptions) {
+  // Fire-and-forget while ensuring errors are logged
+  sendMail(opts).then(res => {
+    if (!res?.ok) console.error('sendMailAsync failed', res);
+  }).catch(e => console.error('sendMailAsync error', e));
+}
+

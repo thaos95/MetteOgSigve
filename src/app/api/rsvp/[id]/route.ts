@@ -53,8 +53,13 @@ export async function PUT(req: Request, ctx: any) {
     // send update confirmation
     try {
       if (email) {
-        const { sendMail } = await import('../../../../lib/mail');
-        await sendMail({ to: email, subject: 'Mette & Sigve — RSVP updated', text: `Your RSVP was updated.` });
+        const mod = await import('../../../../lib/mail');
+        const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed (sync fallback)', res); }).catch(e => console.error('Mail send error (sync fallback)', e)) : null);
+        if (typeof sendAsync === 'function') {
+          sendAsync({ to: email, subject: 'Mette & Sigve — RSVP updated', text: `Your RSVP was updated.` });
+        } else {
+          console.warn('Mail helper not available; skipping update email');
+        }
       }
     } catch (e) { console.error(e); }
 

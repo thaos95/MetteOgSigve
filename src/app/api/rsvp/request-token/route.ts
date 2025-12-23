@@ -72,16 +72,19 @@ export async function POST(req: Request) {
 
     // send token email
     try {
-      const { sendMail } = await import('../../../../lib/mail');
+      const mod = await import('../../../../lib/mail');
+      const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed (sync fallback)', res); }).catch(e => console.error('Mail send error (sync fallback)', e)) : null);
       const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || ''}/rsvp?token=${token}`;
       const html = `<p>Hi ${rsv.name},</p><p>Use the secure link below to ${purpose === 'cancel' ? 'cancel' : 'edit'} your RSVP. The link expires in 1 hour.</p><p><a href="${link}">Open RSVP</a></p>`;
-      await sendMail({ to: rsv.email ?? rsv.email, subject: 'Mette & Sigve — RSVP secure link', text: `Open your RSVP: ${link}`, html });
-      log('Sent token email for rsvp_id', rsv.id);
+      if (typeof sendAsync === 'function') {
+        sendAsync({ to: rsv.email ?? rsv.email, subject: 'Mette & Sigve — RSVP secure link', text: `Open your RSVP: ${link}`, html });
+        log('Triggered async token email for rsvp_id', rsv.id);
+      } else {
+        console.warn('Mail helper not available; skipping send');
+      }
     } catch (mailErr) {
       console.error('Mail error', mailErr);
-      // In production, treat a mail failure as an error; in development, continue but log more info
-      if (process.env.NODE_ENV === 'production') return NextResponse.json({ error: 'failed to send email' }, { status: 500 });
-    }
+      if (process.env.NODE_ENV === 'production') return NextResponse.json({ error: 'failed to schedule email' }, { status: 500 });
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {

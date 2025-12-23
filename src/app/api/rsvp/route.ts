@@ -136,8 +136,9 @@ export async function POST(req: Request) {
           <p>If you want to edit or cancel you can use the request token flow once verified.</p>
           <p>See you soon — Mette & Sigve</p>`;
         if (typeof sendMail === 'function') {
-          const res = await sendMail({ to: email, subject: 'Mette & Sigve — Verify your RSVP', text: `Please verify your RSVP: ${link}`, html });
-          if (!res?.ok) console.error('Mail send failed', res);
+          // Do not block the request on email delivery; send asynchronously
+          const sendAsync = mod?.sendMailAsync ?? ((o: any) => sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed (sync fallback)', res); }).catch(e => console.error('Mail send error (sync fallback)', e)));
+          sendAsync({ to: email, subject: 'Mette & Sigve — Verify your RSVP', text: `Please verify your RSVP: ${link}`, html });
         } else {
           console.warn('sendMail not available; skipping email send in this environment');
         }

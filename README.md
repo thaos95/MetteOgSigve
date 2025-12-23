@@ -49,7 +49,7 @@ Optional (anti-abuse and email delivery):
 - `RL_TOKEN_REQ_PER_EMAIL` - token requests per email (default 5)
 - `RL_TOKEN_REQ_WINDOW` - window in seconds for token request limits (default 3600)
 - `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`) — Upstash REST URL and token for rate limiting
-- `SENDGRID_API_KEY` - optional SendGrid key for production email delivery
+- `SENDGRID_API_KEY` - optional SendGrid key for production email delivery (recommended over SMTP for reliability). To test locally, add `SENDGRID_API_KEY` and `TEST_TO_EMAIL` to `.env.local` and run `node scripts/test_sendgrid_send.js`. In Vercel, add `SENDGRID_API_KEY` and `FROM_EMAIL` to Project > Settings > Environment Variables and deploy.
 
 Notes on security and policies
 - Keep the **Service Role** key secret (set it as a server-only env var in Vercel); server-side code uses this key and bypasses RLS.  
