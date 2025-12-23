@@ -28,7 +28,8 @@ if (REDIS_URL && REDIS_TOKEN) {
       redis = new Redis({ url: restUrl, token });
     } else {
       // fallback: attempt to use REST-style url if tokenless
-      redis = new Redis({ url: restUrl });
+      // cast to any to satisfy typing for tokenless REST usage
+      redis = new Redis({ url: restUrl, token: token || undefined } as any);
     }
   } catch (e) {
     console.error('Could not initialize Upstash Redis client', e);

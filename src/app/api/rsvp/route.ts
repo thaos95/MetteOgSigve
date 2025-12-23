@@ -123,7 +123,7 @@ export async function POST(req: Request) {
         // For local testing, log the raw token (do not enable in production)
         if (process.env.NODE_ENV !== 'production') console.log('DEV verify token:', token);
 
-        const mod = await import('../../../../lib/mail');
+        const mod = await import('../../../lib/mail');
         const sendMail = mod?.sendMail;
         const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || ''}/rsvp?token=${token}`;
         const html = `<p>Hi ${name},</p>

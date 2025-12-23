@@ -64,10 +64,25 @@ export async function PUT(req: Request, ctx: any) {
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } } = { params: { id: undefined } }) {
+export async function DELETE(req: Request, ctx: any) {
   try {
-    const url = new URL(req.url);
-    const id = url.pathname.split('/').filter(Boolean).pop();
+    // Resolve id from params if available
+    let id: string | undefined;
+    try {
+      const params = ctx?.params;
+      if (params && typeof (params as any).then === 'function') {
+        const resolved = await params;
+        id = resolved?.id;
+      } else {
+        id = params?.id;
+      }
+    } catch (e) {
+      console.warn('Could not resolve params for DELETE; falling back to URL parsing');
+    }
+    if (!id) {
+      const url = new URL(req.url);
+      id = url.pathname.split('/').filter(Boolean).pop();
+    }
     const body = await req.json().catch(() => ({}));
     const { token, adminPassword } = body;
 

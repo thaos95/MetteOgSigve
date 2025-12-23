@@ -19,7 +19,8 @@ export async function sendMail(opts: SendOptions) {
   while (attempt < maxRetries) {
     try {
       if (sendgridKey) {
-        const sg = await import('@sendgrid/mail');
+        const sgmod = await import('@sendgrid/mail');
+        const sg: any = (sgmod && (sgmod as any).default) ? (sgmod as any).default : sgmod;
         sg.setApiKey(sendgridKey);
         const m = {
           to: opts.to,
