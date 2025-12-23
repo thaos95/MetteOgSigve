@@ -14,7 +14,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "POSTGRES_URL not configured" }, { status: 500 });
     }
 
-    const client = new Client({ connectionString });
+    // For local dev with Supabase TLS cert chain, allow self-signed certs briefly.
+    // In production rely on the platform's environment/CA chain instead.
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
     await client.connect();
 
     // Quick check: does table already exist?
