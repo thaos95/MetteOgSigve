@@ -22,7 +22,10 @@ export async function POST(req: Request) {
     const attending = body?.attending; // 'all' | 'yes' | 'no'
     const from = body?.from; const to = body?.to;
 
+    // By default only include verified RSVPs; allow admin to include unverified by setting include_unverified = true
+    const includeUnverified = !!body?.include_unverified;
     let q = supabaseServer.from('rsvps').select('*');
+    if (!includeUnverified) q = q.eq('verified', true);
     if (attending === 'yes') q = q.eq('attending', true);
     if (attending === 'no') q = q.eq('attending', false);
     if (from) q = q.gte('created_at', from);

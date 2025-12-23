@@ -16,8 +16,28 @@ export async function POST(req: Request) {
 
     // Idempotent: add columns if not exist
     const sql = `
+      -- RSVPs: add cancelled/updated_at and a verified flag
       alter table public.rsvps add column if not exists cancelled boolean default false;
       alter table public.rsvps add column if not exists updated_at timestamptz;
+      alter table public.rsvps add column if not exists verified boolean default false;
+
+      -- rsvp_tokens: create table if not exists and add token_hash for secure storage
+      create table if not exists public.rsvp_tokens (
+        id uuid primary key default gen_random_uuid(),
+        rsvp_id uuid references public.rsvps(id) on delete cascade,
+        token text unique,
+        token_hash text,
+        purpose text not null,
+        used boolean default false,
+        expires_at timestamptz,
+        created_at timestamptz default now()
+      );
+
+      -- Make token nullable for backward compatibility (drop NOT NULL if it exists)
+      alter table public.rsvp_tokens alter column token drop not null;
+
+      -- Index for quick lookup by token_hash
+      create index if not exists rsvp_tokens_token_hash_idx on public.rsvp_tokens (token_hash);
     `;
 
     await client.query(sql);

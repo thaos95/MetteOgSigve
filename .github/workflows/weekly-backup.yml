@@ -1,0 +1,17 @@
+name: Weekly RSVP Backup
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # every Monday 09:00 UTC
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send RSVP backup to owner
+        run: |
+          curl -sS -X POST "$WEBSITE_URL/api/admin/email-rsvps" \
+            -H "Content-Type: application/json" \
+            -d "{ \"password\": \"${{ secrets.ADMIN_PASSWORD }}\", \"to\": \"${{ secrets.BACKUP_TO }}\" }"
+        env:
+          WEBSITE_URL: ${{ secrets.WEBSITE_URL }}

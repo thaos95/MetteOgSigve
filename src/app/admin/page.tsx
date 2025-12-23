@@ -22,21 +22,6 @@ export default function AdminPage() {
     }
   }
 
-  async function createTable(e: React.FormEvent) {
-    e?.preventDefault();
-    if (!confirm("Create the 'rsvps' table? This action is idempotent and will be disabled after success.")) return;
-    const res = await fetch(`/api/admin/create-rsvps`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert(data.message ?? 'Created');
-    } else {
-      alert(data.error ?? 'Failed to create table');
-    }
-  }
 
   async function removeSentinel(e?: React.FormEvent) {
     e?.preventDefault();
@@ -53,13 +38,14 @@ export default function AdminPage() {
   const [filterAttending, setFilterAttending] = useState<'all'|'yes'|'no'>('all');
   const [filterFrom, setFilterFrom] = useState('');
   const [filterTo, setFilterTo] = useState('');
+  const [includeUnverified, setIncludeUnverified] = useState(false);
 
   async function exportCSV(e?: React.FormEvent) {
     e?.preventDefault();
     const res = await fetch('/api/admin/export-rsvps', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, attending: filterAttending, from: filterFrom || undefined, to: filterTo || undefined }),
+      body: JSON.stringify({ password, attending: filterAttending, from: filterFrom || undefined, to: filterTo || undefined, include_unverified: includeUnverified }),
     });
     if (!res.ok) { const data = await res.json(); alert(data.error ?? 'Export failed'); return; }
     const blob = await res.blob();
@@ -71,6 +57,16 @@ export default function AdminPage() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  }
+
+  async function emailBackup() {
+    const res = await fetch('/api/admin/email-rsvps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, to: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'metteogsigve@gmail.com' }),
+    });
+    const data = await res.json();
+    if (!res.ok) alert(data.error ?? 'Email backup failed'); else alert('Backup sent');
   }
 
   return (
@@ -100,7 +96,12 @@ export default function AdminPage() {
               </select>
               <input type="date" value={filterFrom} onChange={e => setFilterFrom(e.target.value)} className="p-2 border rounded" />
               <input type="date" value={filterTo} onChange={e => setFilterTo(e.target.value)} className="p-2 border rounded" />
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={includeUnverified} onChange={e => setIncludeUnverified(e.target.checked)} />
+                <span className="text-sm">Include unverified</span>
+              </label>
               <button onClick={exportCSV} className="px-3 py-2 bg-blue-600 text-white rounded">Export CSV</button>
+              <button onClick={() => emailBackup()} className="ml-2 px-3 py-2 bg-emerald-600 text-white rounded">Send backup (email)</button>
               <button onClick={removeSentinel} className="ml-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
             </div>
           </div>

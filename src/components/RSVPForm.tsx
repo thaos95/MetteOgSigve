@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function RSVPForm() {
   const [name, setName] = useState("");
@@ -10,15 +10,74 @@ export default function RSVPForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [showExisting, setShowExisting] = useState<any | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [tokenRequested, setTokenRequested] = useState<string | null>(null);
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
+  
+  useEffect(() => {
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!siteKey) return;
+    const s = document.createElement('script');
+    s.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+    s.async = true;
+    s.defer = true;
+    s.onload = () => setRecaptchaReady(true);
+    document.head.appendChild(s);
+  }, []);
+
+  async function getRecaptchaToken(action = 'rsvp') {
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!siteKey || !(window as any).grecaptcha) return undefined;
+    try {
+      await (window as any).grecaptcha.ready();
+      const token = await (window as any).grecaptcha.execute(siteKey, { action });
+      return token;
+    } catch (e) { console.error('recaptcha execute error', e); return undefined; }
+  }
+
+  useEffect(() => {
+    // If page has token param, verify and prefill automatically
+    async function checkToken() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        if (!token) return;
+        const res = await fetch(`/api/rsvp/verify-token?token=${encodeURIComponent(token)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.ok && data.rsvp) {
+          const r = data.rsvp;
+          setName(r.name ?? '');
+          setEmail(r.email ?? '');
+          setAttending(!!r.attending);
+          setGuests(r.guests ?? 0);
+          setNotes(r.notes ?? '');
+          setEditId(r.id);
+          // keep token in URL for submit flow
+          setTokenRequested(token);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    checkToken();
+  }, []);
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("sending");
     try {
-      const res = await fetch("/api/rsvp", {
+      // If token is present in URL, include it to allow update/cancel without admin
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenFromUrl = urlParams.get('token');
+
+      const recaptchaToken = await getRecaptchaToken(editId ? 'edit' : 'rsvp');
+      const payload = editId ? { name, email, attending, guests, notes, id: editId, token: tokenFromUrl } : { name, email, attending, guests, notes };
+      if (recaptchaToken) (payload as any).recaptchaToken = recaptchaToken;
+      const res = await fetch(editId ? `/api/rsvp/${editId}` : "/api/rsvp", {
         method: editId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editId ? { name, email, attending, guests, notes, id: editId } : { name, email, attending, guests, notes })
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
@@ -115,6 +174,20 @@ export default function RSVPForm() {
           </div>
         </div>
       )}
+
+      <div className="mt-4 text-sm text-gray-600">
+        <div>If you want to receive a secure edit/cancel link by email, enter your <strong>email</strong> and click the button below:</div>
+        <div className="mt-2">
+          <button onClick={async () => {
+            if (!email) { alert('Please enter your email first'); return; }
+            const recaptchaToken = await getRecaptchaToken('request-token');
+            const body = { email, purpose: 'edit' } as any;
+            if (recaptchaToken) body.recaptchaToken = recaptchaToken;
+            const res = await fetch('/api/rsvp/request-token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (res.ok) { alert('A secure link was sent to your email (if it exists in our records).'); } else { const d = await res.json(); alert(d.error ?? 'Failed'); }
+          }} className="px-3 py-2 bg-indigo-600 text-white rounded">Request edit/cancel link</button>
+        </div>
+      </div>
     </form>
   );
 }
