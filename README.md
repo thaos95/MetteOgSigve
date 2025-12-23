@@ -118,4 +118,4 @@ This scaffold includes:
 - App router pages: `/`, `/rsvp`, `/gallery`, `/travel`, `/admin`
 - A simple `RSVPForm` component and API endpoints under `/api` to insert & fetch RSVPs.
 
-Customize styles and content to match your desired design and the inspirations from your PDFs.
+Customize styles and content to match your desired design and the gallery or travel information.
