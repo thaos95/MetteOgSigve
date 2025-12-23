@@ -22,14 +22,37 @@ export default function AdminPage() {
     }
   }
 
+  async function createTable(e: React.FormEvent) {
+    e?.preventDefault();
+    if (!confirm("Create the 'rsvps' table? This action is idempotent and will be disabled after success.")) return;
+    const res = await fetch(`/api/admin/create-rsvps`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.message ?? 'Created');
+    } else {
+      alert(data.error ?? 'Failed to create table');
+    }
+  }
+
   return (
     <div>
       <h2 className="text-2xl font-medium">Admin</h2>
       {!authorized ? (
-        <form onSubmit={login} className="mt-4">
-          <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Admin password" className="p-2 border rounded" />
-          <button className="ml-2 px-3 py-2 bg-black text-white rounded">Login</button>
-        </form>
+        <div className="mt-4">
+          <form onSubmit={login} className="mt-2">
+            <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Admin password" className="p-2 border rounded" />
+            <button className="ml-2 px-3 py-2 bg-black text-white rounded">Login</button>
+          </form>
+
+          <div className="mt-4">
+            <p className="text-sm text-gray-600">You can create the `rsvps` table here if it doesn't exist.</p>
+            <button onClick={createTable} className="mt-2 px-3 py-2 bg-gray-800 text-white rounded">Create table</button>
+          </div>
+        </div>
       ) : (
         <div className="mt-4">
           <h3 className="font-medium">RSVPs</h3>

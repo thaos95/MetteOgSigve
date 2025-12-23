@@ -21,8 +21,18 @@ export async function POST(req: Request) {
     await client.connect();
 
     // Quick check: does table already exist?
+    // Respect a local sentinel file to prevent accidental re-runs
+    const fs = await import('fs');
+    const sentinel = '.create_rsvps_done';
+    if (fs.existsSync(sentinel)) {
+      await client.end();
+      return NextResponse.json({ error: 'create-rsvps endpoint disabled (sentinel present)' }, { status: 410 });
+    }
+
     const check = await client.query("SELECT to_regclass('public.rsvps') as reg");
     if (check.rows?.[0]?.reg) {
+      // write sentinel to prevent future runs
+      try { fs.writeFileSync(sentinel, String(new Date())); } catch (e) {}
       await client.end();
       return NextResponse.json({ ok: true, message: "Table 'rsvps' already exists" });
     }
@@ -44,6 +54,10 @@ export async function POST(req: Request) {
     `;
 
     await client.query(sql);
+
+    // write sentinel file so the endpoint cannot accidentally be re-run
+    try { fs.writeFileSync(sentinel, String(new Date())); } catch (e) {}
+
     await client.end();
 
     return NextResponse.json({ ok: true, message: "Table 'rsvps' created and RLS enabled" });
