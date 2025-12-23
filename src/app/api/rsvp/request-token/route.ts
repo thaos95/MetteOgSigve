@@ -33,6 +33,7 @@ export async function POST(req: Request) {
           console.error('recaptcha check error: verifyRecaptchaToken not available');
         } else {
           const verified = await verifyRecaptchaToken(captchaToken, 'request-token');
+          if (process.env.NODE_ENV !== 'production') console.log('recaptcha verify result', verified);
           if (!verified.success || (verified.score !== undefined && verified.score < 0.5)) {
             return NextResponse.json({ error: 'recaptcha failed' }, { status: 429 });
           }

@@ -41,8 +41,7 @@ export async function POST(req: Request) {
       if (enable) {
         const captchaToken = body.recaptchaToken;
         if (!captchaToken) return NextResponse.json({ error: 'recaptcha required' }, { status: 400 });
-        const verified = await verifyRecaptchaToken(captchaToken, 'rsvp');
-        if (!verified.success || (verified.score !== undefined && verified.score < 0.5)) {
+        const verified = await verifyRecaptchaToken(captchaToken, 'rsvp');        if (process.env.NODE_ENV !== 'production') console.log('recaptcha verify result', verified);        if (!verified.success || (verified.score !== undefined && verified.score < 0.5)) {
           return NextResponse.json({ error: 'recaptcha failed' }, { status: 429 });
         }
       }
