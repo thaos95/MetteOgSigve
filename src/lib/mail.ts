@@ -57,7 +57,16 @@ export async function sendMail(opts: SendOptions) {
 export function sendMailAsync(opts: SendOptions) {
   // Fire-and-forget while ensuring errors are logged
   sendMail(opts).then(res => {
-    if (!res?.ok) console.error('sendMailAsync failed', res);
+    if (!res?.ok) {
+      console.error('sendMailAsync failed', res);
+    } else {
+      // Log success to make async sends observable during testing
+      try {
+        console.log('sendMailAsync succeeded', { to: opts.to, subject: opts.subject, info: res.info ? { accepted: res.info.accepted, messageId: res.info.messageId } : undefined });
+      } catch (e) {
+        console.log('sendMailAsync succeeded (result present)');
+      }
+    }
   }).catch(e => console.error('sendMailAsync error', e));
 }
 
