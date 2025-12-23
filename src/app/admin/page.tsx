@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [filterFrom, setFilterFrom] = useState('');
   const [filterTo, setFilterTo] = useState('');
   const [includeUnverified, setIncludeUnverified] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
 
   async function exportCSV(e?: React.FormEvent) {
     e?.preventDefault();
@@ -102,6 +103,16 @@ export default function AdminPage() {
               </label>
               <button onClick={exportCSV} className="px-3 py-2 bg-blue-600 text-white rounded">Export CSV</button>
               <button onClick={() => emailBackup()} className="ml-2 px-3 py-2 bg-emerald-600 text-white rounded">Send backup (email)</button>
+              {/* Test send email */}
+              <div className="ml-2 flex items-center gap-2">
+                <input value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="recipient (optional)" className="p-2 border rounded" />
+                <button onClick={async () => {
+                  const to = testEmail || undefined;
+                  const res = await fetch('/api/admin/test-send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, to }) });
+                  const data = await res.json().catch(()=>({}));
+                  if (!res.ok) alert(data.error || 'Test send failed'); else alert('Test send queued');
+                }} className="px-3 py-2 bg-indigo-600 text-white rounded">Send test email</button>
+              </div>
               <button onClick={removeSentinel} className="ml-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
             </div>
           </div>
