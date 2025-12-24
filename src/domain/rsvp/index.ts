@@ -55,3 +55,18 @@ export {
   isNameLengthValid,
 } from './validation';
 
+// Duplicate detection (pure functions)
+export {
+  personMatches,
+  extractPeopleFromRsvp,
+  checkForDuplicates,
+  deduplicateCandidates,
+  getDuplicateSearchQueries,
+} from './duplicate';
+
+export type {
+  PersonToMatch,
+  CandidateRsvp,
+  DuplicateCheckResult,
+} from './duplicate';
+
