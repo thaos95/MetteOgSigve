@@ -1,12 +1,14 @@
 "use client";
 import { useState } from "react";
 import AuditLogsViewer from '../../components/AuditLogsViewer';
+import AddGuestModal from '../../components/AddGuestModal';
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authorized, setAuthorized] = useState(false);
   const [rsvps, setRsvps] = useState<any[]>([]);
   const [showAudit, setShowAudit] = useState(false);
+  const [showAddGuest, setShowAddGuest] = useState<{ open: boolean; rsvpId?: string | number } | null>(null);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -177,12 +179,27 @@ export default function AdminPage() {
               <button onClick={() => fetchAuditLogsQuick()} className="ml-2 px-3 py-2 bg-gray-600 text-white rounded">Quick preview</button>
             </div>
           </div>
+
+          {showAddGuest && showAddGuest.open && (
+            <AddGuestModal
+              open={showAddGuest.open}
+              initialFirst={''}
+              initialLast={''}
+              onClose={() => setShowAddGuest(null)}
+              onSave={async (p) => {
+                try {
+                  const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: showAddGuest.rsvpId, action: 'add', firstName: p.firstName, lastName: p.lastName, attending: p.attending }) });
+                  const d = await res.json(); if (!res.ok) return alert(d.error || 'Failed to add guest');
+                  setRsvps(rsvps.map(x => x.id === d.rsvp.id ? d.rsvp : x));
+                } catch (e) { alert('Failed to add guest'); }
+              }}
+            />
+          )}
           {showAudit && authorized && <AuditLogsViewer password={password} onClose={() => setShowAudit(false)} />}
           <ul className="mt-2 space-y-2">
             {rsvps
               .filter(r => {
-                if (!memberFilter && !memberAttendingFilter) return true;
-                const mf = memberFilter ? String(memberFilter).toLowerCase() : null;
+                if (!memberFilter && !memberAttendingFilter) return true;                const mf = memberFilter ? String(memberFilter).toLowerCase() : null;
                 let party: any[] = [];
                 try { if (Array.isArray(r.party)) party = r.party; else if (r.party && typeof r.party === 'string') party = JSON.parse(r.party); } catch (e) { party = []; }
                 const people = [{ firstName: r.first_name || (r.name ? String(r.name).split(/\s+/)[0] : ''), lastName: r.last_name || (r.name ? String(r.name).split(/\s+/).slice(-1).join(' ') : ''), attending: !!r.attending }, ...party.map((p:any)=>({ firstName: p.firstName||p.first_name||'', lastName: p.lastName||p.last_name||'', attending: p.attending!==undefined?!!p.attending:!!r.attending }))];
@@ -267,14 +284,7 @@ export default function AdminPage() {
                         </li>
                       )) : <li className="text-sm text-gray-500">No additional guests</li>}
                     <div className="mt-2">
-                      <button onClick={async () => {
-                        // add guest UI: prompt for name (simple)
-                        const first = prompt('First name for new guest') || '';
-                        const last = prompt('Last name for new guest') || '';
-                        if (!first && !last) return;
-                        const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: r.id, action: 'add', firstName: first, lastName: last, attending: true }) });
-                        const d = await res.json(); if (!res.ok) alert(d.error || 'Failed'); else { setRsvps(rsvps.map(x => x.id === r.id ? d.rsvp : x)); }
-                      }} className="mt-2 px-3 py-1 bg-green-600 text-white rounded text-sm">Add guest</button>
+                      <button onClick={() => { setShowAddGuest({ open: true, rsvpId: r.id }); }} className="mt-2 px-3 py-1 bg-green-600 text-white rounded text-sm">Add guest</button>
                     </div>
                     </ul>
                   </div>
