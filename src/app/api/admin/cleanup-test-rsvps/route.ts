@@ -17,19 +17,12 @@ export async function POST(req: Request) {
     }
 
     // Find test RSVPs by email patterns commonly used in tests
+    // @example.com is RFC 2606 reserved for testing - no real guests use it
     const testPatterns = [
+      '%@example.com',
+      '%@test.com',
       '%playwright%',
       '%e2e%',
-      '%test+%',
-      '%auditui+%',
-      '%edittest+%',
-      '%dupauto+%',
-      '%resend+%',
-      '%test401+%',
-      '%auditsec+%',
-      '%unverified+%',
-      '%change+%',
-      '%alt+%',
     ];
 
     // Build OR query for all patterns
