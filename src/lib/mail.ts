@@ -29,8 +29,11 @@ export async function sendMail(opts: SendOptions) {
           text: opts.text,
           html: opts.html,
         } as any;
-        await sg.send(m);
-        return { ok: true };
+        // Optionally BCC a copy to the configured from address for debugging
+        if (process.env.FEATURE_BCC_SELF === 'true' && process.env.FROM_EMAIL) m.bcc = process.env.FROM_EMAIL;
+        // SendGrid may return a response or an array of responses depending on input
+        const sgRes = await sg.send(m);
+        return { ok: true, info: { sendgrid: sgRes } };
       } else {
         const nodemailer = await import('nodemailer');
         const transporter = nodemailer.createTransport({
@@ -39,7 +42,9 @@ export async function sendMail(opts: SendOptions) {
           secure: (process.env.SMTP_SECURE === 'true') || false,
           auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
         });
-        const info = await transporter.sendMail({ from: process.env.FROM_EMAIL as string, to: opts.to as any, subject: opts.subject, text: opts.text, html: opts.html, attachments: opts.attachments });
+        const mailOpts: any = { from: process.env.FROM_EMAIL as string, to: opts.to as any, subject: opts.subject, text: opts.text, html: opts.html, attachments: opts.attachments };
+        if (process.env.FEATURE_BCC_SELF === 'true' && process.env.FROM_EMAIL) mailOpts.bcc = process.env.FROM_EMAIL;
+        const info = await transporter.sendMail(mailOpts);
         return { ok: true, info };
       }
     } catch (err: any) {
@@ -62,7 +67,15 @@ export function sendMailAsync(opts: SendOptions) {
     } else {
       // Log success to make async sends observable during testing
       try {
-        console.log('sendMailAsync succeeded', { to: opts.to, subject: opts.subject, info: res.info ? { accepted: res.info.accepted, messageId: res.info.messageId } : undefined });
+        if (process.env.NODE_ENV !== 'production') {
+          try {
+            console.log('sendMailAsync succeeded (raw):', JSON.stringify(res, null, 2));
+          } catch (e) {
+            console.log('sendMailAsync succeeded (non-serializable):', res);
+          }
+        } else {
+          console.log('sendMailAsync queued', { to: opts.to, subject: opts.subject });
+        }
       } catch (e) {
         console.log('sendMailAsync succeeded (result present)');
       }

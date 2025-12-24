@@ -113,6 +113,19 @@ export default function AdminPage() {
                   if (!res.ok) alert(data.error || 'Test send failed'); else alert('Test send queued');
                 }} className="px-3 py-2 bg-indigo-600 text-white rounded">Send test email</button>
               </div>
+
+              {/* Clear RSVPs (dangerous) */}
+              <div className="ml-2">
+                <button onClick={async () => {
+                  if (!confirm('This will permanently DELETE all RSVPs. Type DELETE to confirm in the next prompt. Continue?')) return;
+                  const answer = prompt('Type DELETE to confirm');
+                  if (answer !== 'DELETE') return alert('Cancelled');
+                  const res = await fetch('/api/admin/clear-rsvps', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, confirm: 'DELETE' }) });
+                  const data = await res.json().catch(()=>({}));
+                  if (!res.ok) alert(data.error || 'Clear failed'); else { alert(`Deleted ${data.deleted ?? 0} RSVPs`); setRsvps([]); }
+                }} className="ml-2 px-3 py-2 bg-red-700 text-white rounded">Clear all RSVPs</button>
+              </div>
+
               <button onClick={removeSentinel} className="ml-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
             </div>
           </div>
