@@ -50,6 +50,21 @@ function InnerAdminPage() {
   const [testEmail, setTestEmail] = useState('');
   const [memberFilter, setMemberFilter] = useState('');
   const [memberAttendingFilter, setMemberAttendingFilter] = useState<'' | 'yes' | 'no'>('');
+  const [emailFilter, setEmailFilter] = useState('');
+
+  // Compute dashboard stats
+  const stats = {
+    total: rsvps.length,
+    verified: rsvps.filter(r => r.verified).length,
+    unverified: rsvps.filter(r => !r.verified).length,
+    attending: rsvps.filter(r => r.attending).length,
+    notAttending: rsvps.filter(r => !r.attending).length,
+    totalGuests: rsvps.reduce((sum, r) => {
+      let party: any[] = [];
+      try { if (Array.isArray(r.party)) party = r.party; else if (r.party && typeof r.party === 'string') party = JSON.parse(r.party); } catch (e) { party = []; }
+      return sum + 1 + party.length;
+    }, 0),
+  };
 
   async function exportCSV(e?: React.FormEvent) {
     e?.preventDefault();
@@ -82,7 +97,11 @@ function InnerAdminPage() {
 
   async function fetchAuditLogsQuick() {
     try {
-      const res = await fetch(`/api/admin/audit-logs?password=${encodeURIComponent(password)}&limit=50`);
+      const res = await fetch('/api/admin/audit-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, limit: 50 })
+      });
       const data = await res.json().catch(()=>({}));
       if (!res.ok) { alert(data.error || 'Failed to fetch logs'); return; }
       const logs = data.logs || [];
@@ -98,7 +117,7 @@ function InnerAdminPage() {
       {!authorized ? (
         <div className="mt-4">
           <form onSubmit={login} className="mt-2">
-            <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Admin password" className="p-2 border rounded" />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Admin password" className="p-2 border rounded" />
             <button className="ml-2 px-3 py-2 bg-black text-white rounded">Login</button>
           </form>
 
@@ -109,6 +128,34 @@ function InnerAdminPage() {
         </div>
       ) : (
         <div className="mt-4 space-y-4">
+          {/* Dashboard Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="p-3 bg-blue-50 rounded border border-blue-200">
+              <div className="text-2xl font-bold text-blue-700">{stats.total}</div>
+              <div className="text-xs text-blue-600">Total RSVPs</div>
+            </div>
+            <div className="p-3 bg-green-50 rounded border border-green-200">
+              <div className="text-2xl font-bold text-green-700">{stats.attending}</div>
+              <div className="text-xs text-green-600">Attending</div>
+            </div>
+            <div className="p-3 bg-red-50 rounded border border-red-200">
+              <div className="text-2xl font-bold text-red-700">{stats.notAttending}</div>
+              <div className="text-xs text-red-600">Not Attending</div>
+            </div>
+            <div className="p-3 bg-emerald-50 rounded border border-emerald-200">
+              <div className="text-2xl font-bold text-emerald-700">{stats.verified}</div>
+              <div className="text-xs text-emerald-600">Verified</div>
+            </div>
+            <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
+              <div className="text-2xl font-bold text-yellow-700">{stats.unverified}</div>
+              <div className="text-xs text-yellow-600">Unverified</div>
+            </div>
+            <div className="p-3 bg-purple-50 rounded border border-purple-200">
+              <div className="text-2xl font-bold text-purple-700">{stats.totalGuests}</div>
+              <div className="text-xs text-purple-600">Total Guests</div>
+            </div>
+          </div>
+
           {/* Header section */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="font-medium text-lg">RSVPs</h3>
@@ -147,6 +194,10 @@ function InnerAdminPage() {
               <div>
                 <label htmlFor="member-filter" className="block text-xs text-gray-600 mb-1">Member name</label>
                 <input id="member-filter" value={memberFilter} onChange={e => setMemberFilter(e.target.value)} placeholder="Filter by name" className="w-full p-2 border rounded text-sm" />
+              </div>
+              <div>
+                <label htmlFor="email-filter" className="block text-xs text-gray-600 mb-1">Email</label>
+                <input id="email-filter" value={emailFilter} onChange={e => setEmailFilter(e.target.value)} placeholder="Filter by email" className="w-full p-2 border rounded text-sm" />
               </div>
               <div>
                 <label htmlFor="member-attending-filter" className="block text-xs text-gray-600 mb-1">Member attending</label>
@@ -234,11 +285,16 @@ function InnerAdminPage() {
           )}
           {showAudit && authorized && <AuditLogsViewer password={password} onClose={() => setShowAudit(false)} />}
 
-          {showAudit && authorized && <AuditLogsViewer password={password} onClose={() => setShowAudit(false)} />}
           <ul className="mt-2 space-y-2">
             {rsvps
               .filter(r => {
-                if (!memberFilter && !memberAttendingFilter) return true;                const mf = memberFilter ? String(memberFilter).toLowerCase() : null;
+                // Email filter
+                if (emailFilter) {
+                  const ef = emailFilter.toLowerCase();
+                  if (!String(r.email || '').toLowerCase().includes(ef)) return false;
+                }
+                if (!memberFilter && !memberAttendingFilter) return true;
+                const mf = memberFilter ? String(memberFilter).toLowerCase() : null;
                 let party: any[] = [];
                 try { if (Array.isArray(r.party)) party = r.party; else if (r.party && typeof r.party === 'string') party = JSON.parse(r.party); } catch (e) { party = []; }
                 const people = [{ firstName: r.first_name || (r.name ? String(r.name).split(/\s+/)[0] : ''), lastName: r.last_name || (r.name ? String(r.name).split(/\s+/).slice(-1).join(' ') : ''), attending: !!r.attending }, ...party.map((p:any)=>({ firstName: p.firstName||p.first_name||'', lastName: p.lastName||p.last_name||'', attending: p.attending!==undefined?!!p.attending:!!r.attending }))];

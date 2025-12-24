@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
+import { logAdminAction } from '../../../../lib/adminAudit';
 
 export async function POST(req: Request) {
   try {
@@ -21,6 +22,12 @@ export async function POST(req: Request) {
 
     const { error: delErr } = await supabaseServer.from('rsvps').delete().in('id', ids);
     if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+
+    // Audit log for destructive operation
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
+    const deviceId = req.headers.get('x-device-id') || null;
+    await logAdminAction({ adminEmail, action: 'clear-all-rsvps', targetTable: 'rsvps', targetId: 'ALL', before: { count: ids.length, ids }, after: null, ip, deviceId });
 
     return NextResponse.json({ ok: true, deleted: ids.length });
   } catch (e: any) {

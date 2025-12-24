@@ -56,7 +56,9 @@ test('admin can edit, remove, reorder, and add guests', async ({ page, request }
 
   // Verify audit logs were created for this RSVP
   const rsvpId = (await create.json()).rsvp.id;
-  const logsRes = await request.get(`${base}/api/admin/audit-logs?password=${encodeURIComponent(process.env.ADMIN_PASSWORD || 'metteogsigve')}&targetId=${encodeURIComponent(rsvpId)}`);
+  const logsRes = await request.post(`${base}/api/admin/audit-logs`, {
+    data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', targetId: rsvpId }
+  });
   expect(logsRes.ok()).toBeTruthy();
   const logs = await logsRes.json();
   expect(Array.isArray(logs.logs)).toBeTruthy();

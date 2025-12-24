@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { logAdminAction } from '../../../../lib/adminAudit';
 
 export async function POST(req: Request) {
   try {
@@ -11,6 +12,10 @@ export async function POST(req: Request) {
 
     const redis = (Redis as any).fromEnv ? (Redis as any).fromEnv() : new Redis({ url: process.env.KV_REST_API_URL || process.env.REDIS_URL, token: process.env.KV_REST_API_TOKEN || process.env.REDIS_TOKEN });
     if (!redis) return NextResponse.json({ error: 'redis not configured' }, { status: 500 });
+
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
+    const deviceId = req.headers.get('x-device-id') || null;
 
     if (email && (body as any).view) {
       const e = String(email).trim().toLowerCase();
@@ -51,6 +56,8 @@ export async function POST(req: Request) {
           deleted.push(k);
         }
       }
+      // Audit log
+      await logAdminAction({ adminEmail, action: 'reset-rate-limits', targetTable: 'rate-limits', targetId: e, before: { keys }, after: { cleared: deleted }, ip, deviceId });
       return NextResponse.json({ ok: true, cleared: deleted });
     }
 
@@ -58,6 +65,8 @@ export async function POST(req: Request) {
       // REMOVE ALL rate-limit keys (use with caution)
       const keys = await redis.keys('rl:*');
       for (const k of keys) await redis.del(k);
+      // Audit log
+      await logAdminAction({ adminEmail, action: 'reset-all-rate-limits', targetTable: 'rate-limits', targetId: 'ALL', before: { keyCount: keys.length }, after: null, ip, deviceId });
       return NextResponse.json({ ok: true, clearedCount: keys.length });
     }
 

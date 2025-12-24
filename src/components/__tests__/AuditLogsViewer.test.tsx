@@ -33,7 +33,12 @@ describe('AuditLogsViewer', () => {
   test('fetches and displays logs and shows details modal', async () => {
     render(<AuditLogsViewer password="pw" onClose={() => {}} />);
 
-    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining('/api/admin/audit-logs?'));
+    // Changed from GET to POST - verify POST call with body
+    expect(fetchMock).toHaveBeenCalledWith('/api/admin/audit-logs', expect.objectContaining({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: expect.stringContaining('"password":"pw"')
+    }));
 
     await waitFor(() => expect(screen.getByText(/Showing 1 of 1 logs/i)).toBeInTheDocument());
 
@@ -63,7 +68,14 @@ describe('AuditLogsViewer', () => {
     await user.click(screen.getByRole('button', { name: /filter/i }));
 
     await waitFor(() => {
-      const called = fetchMock.mock.calls.find((c: any) => String(c[0]).includes('adminEmail=admin%40example.com') && String(c[0]).includes('action=edit_guest'));
+      // Changed from GET query params to POST body - verify body contains filters
+      const called = fetchMock.mock.calls.find((c: any) => {
+        if (c[1]?.body) {
+          const body = JSON.parse(c[1].body);
+          return body.adminEmail === 'admin@example.com' && body.action === 'edit_guest';
+        }
+        return false;
+      });
       expect(called).toBeTruthy();
     });
   });

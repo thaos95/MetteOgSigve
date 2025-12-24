@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "../../../../lib/supabaseServer";
+import { logAdminAction } from "../../../../lib/adminAudit";
 
 function csvEscape(value: any) {
   if (value === null || value === undefined) return "";
@@ -86,6 +87,13 @@ export async function POST(req: Request) {
       });
 
       const csv = [headers.join(',')].concat(filtered.map(r => headers.map(h => csvEscape(r[h])).join(','))).join('\n');
+      
+      // Audit log export
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin';
+      const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
+      const deviceId = req.headers.get('x-device-id') || null;
+      await logAdminAction({ adminEmail, action: 'export-rsvps', targetTable: 'rsvps', targetId: 'csv-per-person', before: null, after: { rowCount: filtered.length, filters: { attending, from, to, includeUnverified, personNameFilter, personAttendingFilter } }, ip, deviceId });
+
       const res = new NextResponse(csv, {
         status: 200,
         headers: {
@@ -98,6 +106,12 @@ export async function POST(req: Request) {
 
     const headers = ['id','name','email','attending','guests','notes','created_at'];
     const csv = [headers.join(',')].concat(rows.map(r => headers.map(h => csvEscape(r[h])).join(','))).join('\n');
+
+    // Audit log export
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
+    const deviceId = req.headers.get('x-device-id') || null;
+    await logAdminAction({ adminEmail, action: 'export-rsvps', targetTable: 'rsvps', targetId: 'csv', before: null, after: { rowCount: rows.length, filters: { attending, from, to, includeUnverified } }, ip, deviceId });
 
     const res = new NextResponse(csv, {
       status: 200,

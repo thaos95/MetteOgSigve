@@ -29,10 +29,14 @@ export default function AuditLogsViewer({ password, onClose }: { password: strin
     setLoading(true);
     try {
       const offset = p * limit;
-      const params = new URLSearchParams({ password, limit: String(limit), offset: String(offset) });
-      if (filterAction) params.set('action', filterAction);
-      if (filterAdmin) params.set('adminEmail', filterAdmin);
-      const res = await fetch('/api/admin/audit-logs?' + params.toString());
+      const body: any = { password, limit, offset };
+      if (filterAction) body.action = filterAction;
+      if (filterAdmin) body.adminEmail = filterAdmin;
+      const res = await fetch('/api/admin/audit-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || 'Failed');
       setLogs(js.logs || []);

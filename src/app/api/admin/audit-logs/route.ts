@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
 
-export async function GET(req: Request) {
+// POST method for secure password handling (not exposed in URL/logs)
+export async function POST(req: Request) {
   try {
-    const url = new URL(req.url);
-    const password = url.searchParams.get('password');
+    const body = await req.json().catch(() => ({}));
+    const password = body?.password;
     if (!password || password !== process.env.ADMIN_PASSWORD) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-    const limit = Math.min(Number(url.searchParams.get('limit') || 50), 200);
-    const offset = Math.max(Number(url.searchParams.get('offset') || 0), 0);
-    const adminEmail = url.searchParams.get('adminEmail');
-    const action = url.searchParams.get('action');
-    const targetTable = url.searchParams.get('targetTable');
-    const targetId = url.searchParams.get('targetId');
+    const limit = Math.min(Number(body?.limit || 50), 200);
+    const offset = Math.max(Number(body?.offset || 0), 0);
+    const adminEmail = body?.adminEmail;
+    const action = body?.action;
+    const targetTable = body?.targetTable;
+    const targetId = body?.targetId;
 
     // Use exact count to support client pagination
     let q = supabaseServer.from('admin_audit_logs').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + limit - 1);

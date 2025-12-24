@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "../../../../lib/supabaseServer";
+import { logAdminAction } from "../../../../lib/adminAudit";
 import nodemailer from "nodemailer";
 
 function csvEscape(value: any) {
@@ -105,6 +106,12 @@ export async function POST(req: Request) {
       text: 'Attached is the CSV export of RSVPs.',
       attachments: [{ filename: 'rsvps.csv', content: csv }]
     });
+
+    // Audit log email export
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
+    const deviceId = req.headers.get('x-device-id') || null;
+    await logAdminAction({ adminEmail, action: 'email-rsvps-backup', targetTable: 'rsvps', targetId: toEmail, before: null, after: { rowCount: filteredRows.length, sentTo: toEmail, filters: { personNameFilter, personAttendingFilter } }, ip, deviceId });
 
     return NextResponse.json({ ok: true, info });
   } catch (err: any) {

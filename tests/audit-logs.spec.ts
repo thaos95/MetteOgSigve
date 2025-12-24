@@ -26,7 +26,9 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
   // Wait for audit log entry to be available via API (poll) and assert it references NewG in 'after'
   let found = false;
   for (let i = 0; i < 20; i++) {
-    const logsRes = await request.get(`${base}/api/admin/audit-logs?password=${encodeURIComponent(process.env.ADMIN_PASSWORD || 'metteogsigve')}&targetId=${encodeURIComponent(rsvpId)}`);
+    const logsRes = await request.post(`${base}/api/admin/audit-logs`, {
+      data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', targetId: rsvpId }
+    });
     if (!logsRes.ok()) {
       await new Promise(r => setTimeout(r, 300));
       continue;

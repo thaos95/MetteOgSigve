@@ -56,7 +56,9 @@ test('admin add guest via modal works and validates', async ({ page, request }) 
   await expect(page.getByRole('status')).toHaveText(/Guest added/i);
 
   // Verify via API that guest was added (audit log presence or rsvp party contains "UI-New")
-  const logsRes = await request.get(`${base}/api/admin/audit-logs?password=${encodeURIComponent(process.env.ADMIN_PASSWORD || 'metteogsigve')}&targetId=${encodeURIComponent(rsvpId)}`);
+  const logsRes = await request.post(`${base}/api/admin/audit-logs`, {
+    data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', targetId: rsvpId }
+  });
   expect(logsRes.ok()).toBeTruthy();
   const logs = await logsRes.json();
   const found = (logs.logs || []).some((l:any) => l.action === 'add-guest' && JSON.stringify(l.after || '').includes('UI-New'));
