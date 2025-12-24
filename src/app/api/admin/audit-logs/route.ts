@@ -14,13 +14,14 @@ export async function GET(req: Request) {
     const targetTable = url.searchParams.get('targetTable');
     const targetId = url.searchParams.get('targetId');
 
-    let q = supabaseServer.from('admin_audit_logs').select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+    // Use exact count to support client pagination
+    let q = supabaseServer.from('admin_audit_logs').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + limit - 1);
     if (adminEmail) q = q.eq('admin_email', adminEmail);
     if (action) q = q.eq('action', action);
     if (targetTable) q = q.eq('target_table', targetTable);
     if (targetId) q = q.eq('target_id', targetId);
 
-    const { data, error } = await q;
+    const { data, error, count } = await q;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     // Parse before/after fields if they're strings
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
       after: tryParseJson(row.after),
     }));
 
-    return NextResponse.json({ ok: true, logs: parsed });
+    return NextResponse.json({ ok: true, logs: parsed, count: typeof count === 'number' ? count : parsed.length });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? String(e) }, { status: 500 });
   }

@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
+import AuditLogsViewer from '../../components/AuditLogsViewer';
 
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authorized, setAuthorized] = useState(false);
   const [rsvps, setRsvps] = useState<any[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -171,10 +173,11 @@ export default function AdminPage() {
               </div>
 
               <button onClick={removeSentinel} className="ml-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
-              <button onClick={() => fetchAuditLogsQuick()} className="ml-2 px-3 py-2 bg-gray-700 text-white rounded">View audit logs (quick)</button>
+              <button onClick={() => setShowAudit(true)} className="ml-2 px-3 py-2 bg-gray-700 text-white rounded">Open audit logs</button>
+              <button onClick={() => fetchAuditLogsQuick()} className="ml-2 px-3 py-2 bg-gray-600 text-white rounded">Quick preview</button>
             </div>
           </div>
-
+          {showAudit && authorized && <AuditLogsViewer password={password} onClose={() => setShowAudit(false)} />}
           <ul className="mt-2 space-y-2">
             {rsvps
               .filter(r => {
