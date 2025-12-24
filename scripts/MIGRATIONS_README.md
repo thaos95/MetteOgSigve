@@ -3,7 +3,7 @@ Migration application options
 1) Run with Node (recommended if you have direct DB URL locally)
 
 - Ensure `.env.local` contains a usable connection string in one of: `POSTGRES_URL_NON_POOLING`, `POSTGRES_PRISMA_URL`, or `POSTGRES_URL`.
-- Run: `node scripts/run_migration.js`
+- Run: `node scripts/run_migration.js`  (the runner now applies all files in `scripts/migrations` in order; set `MIGRATION_SKIP_SSL_VERIFY=true` if you need to bypass TLS verification in local/dev environments)
 
 2) Use psql (if you have a psql client and a connection string):
 
