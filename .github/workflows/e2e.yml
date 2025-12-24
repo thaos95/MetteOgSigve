@@ -5,75 +5,47 @@ on:
     branches: [ main ]
 
 jobs:
-  e2e-audit-smoke:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install only Playwright
-        run: |
-          npm ci
-          npx playwright install --with-deps
-      - name: Start dev server
-        run: |
-          npm run dev &
-          npx wait-on http://localhost:3000
-      - name: Run audit logs smoke test
-        run: npx playwright test tests/audit-logs.spec.ts --reporter=list
-        env:
-          BASE_URL: http://localhost:3000
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          # Add any other secrets needed for this specific test
-
   e2e:
-    needs: e2e-audit-smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          
       - name: Install deps
         run: |
           npm ci
           npx playwright install --with-deps
+          
       - name: Start dev server
         run: |
           npm run dev &
           npx wait-on http://localhost:3000
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          
       - name: Run Playwright tests (full suite)
         run: npx playwright test --reporter=list
         env:
           BASE_URL: http://localhost:3000
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          # Provide other secrets as needed for DB or SMTP (for export tests), or mock them in CI
-
-  e2e-audit-smoke:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install only Playwright
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          
+      # Global teardown in playwright.config.ts handles cleanup automatically
+      # This step is a fallback in case teardown fails
+      - name: Cleanup test data (fallback)
+        if: always()
         run: |
-          npm ci
-          npx playwright install --with-deps
-      - name: Start dev server
-        run: |
-          npm run dev &
-          npx wait-on http://localhost:3000
-      - name: Run audit logs smoke test
-        run: npx playwright test tests/audit-logs.spec.ts --reporter=list
-        env:
-          BASE_URL: http://localhost:3000
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          # Add any other secrets needed for this specific test
+          curl -X POST http://localhost:3000/api/admin/cleanup-test-rsvps \
+            -H "Content-Type: application/json" \
+            -d '{"password":"${{ secrets.ADMIN_PASSWORD }}"}' \
+            || echo "Cleanup request failed (server may be stopped)"
+        continue-on-error: true

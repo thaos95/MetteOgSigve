@@ -5,6 +5,8 @@ export default defineConfig({
   timeout: 30 * 1000,
   expect: { timeout: 5000 },
   fullyParallel: false,
+  // Global teardown to clean up test data after all tests
+  globalTeardown: './tests/global-teardown.ts',
   // Automatically start dev server when not running (useful for local runs and CI)
   webServer: {
     command: 'npm run dev',

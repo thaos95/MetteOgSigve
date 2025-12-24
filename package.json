@@ -11,7 +11,8 @@
     "test:e2e": "playwright test",
     "test:e2e:modal": "playwright test tests/add-guest-modal.spec.ts",
     "test:e2e:setup": "npm ci && npx playwright install --with-deps",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "cleanup:test-data": "curl -X POST http://localhost:3000/api/admin/cleanup-test-rsvps -H \"Content-Type: application/json\" -d \"{\\\"password\\\":\\\"$ADMIN_PASSWORD\\\"}\""
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
