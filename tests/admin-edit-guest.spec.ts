@@ -37,6 +37,17 @@ test('admin can edit, remove, reorder, and add guests', async ({ page, request }
   // Add a new guest
   await row.locator('button:has-text("Add guest")').click();
   // prompt workaround: test the API directly to add one
-  const rsvps = await request.post(`${base}/api/admin/edit-guest`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', rsvpId: (await create.json()).rsvp.id, action: 'add', firstName: 'NewG', lastName: 'Added', attending: true } });
-  expect(rsvps.ok()).toBeTruthy();
+  const addRes = await request.post(`${base}/api/admin/edit-guest`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', rsvpId: (await create.json()).rsvp.id, action: 'add', firstName: 'NewG', lastName: 'Added', attending: true } });
+  expect(addRes.ok()).toBeTruthy();
+
+  // Verify audit logs were created for this RSVP
+  const rsvpId = (await create.json()).rsvp.id;
+  const logsRes = await request.get(`${base}/api/admin/audit-logs?password=${encodeURIComponent(process.env.ADMIN_PASSWORD || 'metteogsigve')}&targetId=${encodeURIComponent(rsvpId)}`);
+  expect(logsRes.ok()).toBeTruthy();
+  const logs = await logsRes.json();
+  expect(Array.isArray(logs.logs)).toBeTruthy();
+  expect(logs.logs.length).toBeGreaterThanOrEqual(1);
+  // one of the recent logs should reference add-guest
+  const hasAdd = (logs.logs || []).some((l:any) => l.action === 'add-guest');
+  expect(hasAdd).toBeTruthy();
 });

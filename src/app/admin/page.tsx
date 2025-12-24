@@ -72,6 +72,18 @@ export default function AdminPage() {
     if (!res.ok) alert(data.error ?? 'Email backup failed'); else alert('Backup sent');
   }
 
+  async function fetchAuditLogsQuick() {
+    try {
+      const res = await fetch(`/api/admin/audit-logs?password=${encodeURIComponent(password)}&limit=50`);
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok) { alert(data.error || 'Failed to fetch logs'); return; }
+      const logs = data.logs || [];
+      if (!logs.length) return alert('No logs');
+      const preview = logs.slice(0,10).map((l:any)=>`${new Date(l.created_at).toLocaleString()} • ${l.admin_email} • ${l.action} • ${l.target_table}/${l.target_id}`).join('\n');
+      alert(preview);
+    } catch (e:any) { alert('Failed to fetch logs: ' + (e?.message || String(e))); }
+  }
+
   return (
     <div>
       <h2 className="text-2xl font-medium">Admin</h2>
@@ -159,6 +171,7 @@ export default function AdminPage() {
               </div>
 
               <button onClick={removeSentinel} className="ml-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
+              <button onClick={() => fetchAuditLogsQuick()} className="ml-2 px-3 py-2 bg-gray-700 text-white rounded">View audit logs (quick)</button>
             </div>
           </div>
 
@@ -219,8 +232,8 @@ export default function AdminPage() {
                         <li key={i} className="flex items-center gap-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <input value={p.firstName ?? p.first_name || ''} onChange={e => setRsvps(rsvps.map(x => x.id === r.id ? { ...x, party: (x.party||[]).map((pp:any,ii:number)=>ii===i?{...pp,firstName:e.target.value}:pp) } : x))} className="p-1 border rounded w-32" />
-                              <input value={p.lastName ?? p.last_name || ''} onChange={e => setRsvps(rsvps.map(x => x.id === r.id ? { ...x, party: (x.party||[]).map((pp:any,ii:number)=>ii===i?{...pp,lastName:e.target.value}:pp) } : x))} className="p-1 border rounded w-32" />
+                              <input value={(p.firstName ?? p.first_name) || ''} onChange={e => setRsvps(rsvps.map(x => x.id === r.id ? { ...x, party: (x.party||[]).map((pp:any,ii:number)=>ii===i?{...pp,firstName:e.target.value}:pp) } : x))} className="p-1 border rounded w-32" />
+                              <input value={(p.lastName ?? p.last_name) || ''} onChange={e => setRsvps(rsvps.map(x => x.id === r.id ? { ...x, party: (x.party||[]).map((pp:any,ii:number)=>ii===i?{...pp,lastName:e.target.value}:pp) } : x))} className="p-1 border rounded w-32" />
                               <label className="flex items-center gap-1"><input type="checkbox" checked={!!p.attending} onChange={e => setRsvps(rsvps.map(x => x.id === r.id ? { ...x, party: (x.party||[]).map((pp:any,ii:number)=>ii===i?{...pp,attending:e.target.checked}:pp) } : x))} /> Attending</label>
                             </div>
                             <div className="mt-1 text-xs text-gray-500">Edit fields above then use Save/Move/Remove</div>
@@ -250,16 +263,16 @@ export default function AdminPage() {
                           </div>
                         </li>
                       )) : <li className="text-sm text-gray-500">No additional guests</li>}
-+                    <div className="mt-2">
-+                      <button onClick={async () => {
-+                        // add guest UI: prompt for name (simple)
-+                        const first = prompt('First name for new guest') || '';
-+                        const last = prompt('Last name for new guest') || '';
-+                        if (!first && !last) return;
-+                        const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: r.id, action: 'add', firstName: first, lastName: last, attending: true }) });
-+                        const d = await res.json(); if (!res.ok) alert(d.error || 'Failed'); else { setRsvps(rsvps.map(x => x.id === r.id ? d.rsvp : x)); }
-+                      }} className="mt-2 px-3 py-1 bg-green-600 text-white rounded text-sm">Add guest</button>
-+                    </div>
+                    <div className="mt-2">
+                      <button onClick={async () => {
+                        // add guest UI: prompt for name (simple)
+                        const first = prompt('First name for new guest') || '';
+                        const last = prompt('Last name for new guest') || '';
+                        if (!first && !last) return;
+                        const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: r.id, action: 'add', firstName: first, lastName: last, attending: true }) });
+                        const d = await res.json(); if (!res.ok) alert(d.error || 'Failed'); else { setRsvps(rsvps.map(x => x.id === r.id ? d.rsvp : x)); }
+                      }} className="mt-2 px-3 py-1 bg-green-600 text-white rounded text-sm">Add guest</button>
+                    </div>
                     </ul>
                   </div>
 

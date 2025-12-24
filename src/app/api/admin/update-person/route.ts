@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
+import { logAdminAction } from '../../../../lib/adminAudit';
 
 export async function POST(req: Request) {
   try {
@@ -26,9 +27,17 @@ export async function POST(req: Request) {
 
     if (target === 'primary') {
       // toggle primary attending field
+      const before = r;
       const { error: up } = await supabaseServer.from('rsvps').update({ attending: !!attending, updated_at: new Date().toISOString() }).eq('id', rsvpId).select('*');
       if (up) return NextResponse.json({ error: up.message }, { status: 500 });
       const { data: updated } = await supabaseServer.from('rsvps').select('*').eq('id', rsvpId).limit(1);
+
+      // Audit
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin';
+      const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
+      const deviceId = req.headers.get('x-device-id') || null;
+      await logAdminAction({ adminEmail, action: 'update-primary-attending', targetTable: 'rsvps', targetId: String(rsvpId), before, after: updated?.[0], ip, deviceId });
+
       return NextResponse.json({ ok: true, rsvp: updated?.[0] });
     }
 
@@ -36,12 +45,19 @@ export async function POST(req: Request) {
     const idx = Number.isFinite(Number(target)) ? Number(target) : null;
     if (idx === null || idx < 0 || idx >= party.length) return NextResponse.json({ error: 'invalid target index' }, { status: 400 });
 
+    const before = { party: JSON.parse(JSON.stringify(party)) };
     party[idx].attending = !!attending;
 
     const { error: upErr } = await supabaseServer.from('rsvps').update({ party, updated_at: new Date().toISOString() }).eq('id', rsvpId).select('*');
     if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 
     const { data: updated } = await supabaseServer.from('rsvps').select('*').eq('id', rsvpId).limit(1);
+
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
+    const deviceId = req.headers.get('x-device-id') || null;
+    await logAdminAction({ adminEmail, action: 'update-party-attending', targetTable: 'rsvps', targetId: String(rsvpId), before, after: updated?.[0], ip, deviceId });
+
     return NextResponse.json({ ok: true, rsvp: updated?.[0] });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? String(e) }, { status: 500 });
