@@ -41,7 +41,7 @@ export default function AdminPage() {
   const [includeUnverified, setIncludeUnverified] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [memberFilter, setMemberFilter] = useState('');
-  const [memberAttendingFilter, setMemberAttendingFilter] = useState<'','yes','no' | ''>('');
+  const [memberAttendingFilter, setMemberAttendingFilter] = useState<'' | 'yes' | 'no'>('');
 
   async function exportCSV(e?: React.FormEvent) {
     e?.preventDefault();
@@ -118,7 +118,7 @@ export default function AdminPage() {
 
               <div className="flex items-center gap-2">
                 <input value={memberFilter} onChange={e => setMemberFilter(e.target.value)} placeholder="Filter by member name" className="p-2 border rounded" />
-                <select value={memberAttendingFilter} onChange={e => setMemberAttendingFilter(e.target.value)} className="p-2 border rounded">
+                <select value={memberAttendingFilter} onChange={e => setMemberAttendingFilter(e.target.value as '' | 'yes' | 'no')} className="p-2 border rounded">
                   <option value="">Member attending (any)</option>
                   <option value="yes">Member attending</option>
                   <option value="no">Member not attending</option>

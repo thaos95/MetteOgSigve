@@ -127,10 +127,11 @@ export default function RSVPForm() {
   }
 
   async function startEditFromExisting(existing: any) {
-    setName(existing.name ?? "");
+    setFirstName(existing.first_name ?? (existing.name ? String(existing.name).split(/\s+/)[0] : ""));
+    setLastName(existing.last_name ?? (existing.name ? String(existing.name).split(/\s+/).slice(-1).join(' ') : ""));
     setEmail(existing.email ?? "");
     setAttending(!!existing.attending);
-    setGuests(existing.guests ?? 0);
+    setParty(Array.isArray(existing.party) ? existing.party : (existing.party ? JSON.parse(existing.party) : []));
     setNotes(existing.notes ?? "");
     setEditId(existing.id);
     setShowExisting(null);
