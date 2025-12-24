@@ -64,8 +64,8 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
   await filterBtn.evaluate((el: any) => el.click());
   await page.waitForTimeout(300); // short wait for filter to apply
 
-  // Ensure a row referencing the action exists (scoped to the modal table)
-  const row = modal.locator('table').locator('tr').filter({ hasText: 'add-guest' }).first();
+  // Ensure a row referencing the action exists AND matches our specific rsvpId
+  const row = modal.locator('table').locator('tr').filter({ hasText: rsvpId }).first();
   await expect(row).toBeVisible();
 
   // Assert pagination state (prev disabled on first page)

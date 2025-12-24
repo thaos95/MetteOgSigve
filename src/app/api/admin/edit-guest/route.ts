@@ -9,18 +9,21 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     
+    // Check password first for proper 401 response (before Zod validation)
+    if (!body?.password) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    }
+    if (body.password !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    }
+    
     // Validate input with Zod schema
     const parseResult = editGuestSchema.safeParse(body);
     if (!parseResult.success) {
       return errorResponse(zodToAppError(parseResult.error as ZodError));
     }
     
-    const { password, rsvpId, action, index, firstName, lastName, attending, dir } = parseResult.data;
-    
-    // Auth check
-    if (password !== process.env.ADMIN_PASSWORD) {
-      return errorResponse(AppError.unauthorized());
-    }
+    const { rsvpId, action, index, firstName, lastName, attending, dir } = parseResult.data;
 
     // Fetch existing RSVP
     const { data: rows, error: fetchErr } = await supabaseServer.from('rsvps').select('*').eq('id', rsvpId).limit(1);
