@@ -2,12 +2,22 @@ End-to-end tests (Playwright)
 
 Install deps & Playwright browsers:
 
-1) npm install --save-dev @playwright/test
-2) npx playwright install
+- Option A (recommended): run the setup script (installs dev deps and browsers):
+
+  npm run test:e2e:setup
+
+- Option B: manually install dev dependency and browsers:
+
+  npm install --save-dev @playwright/test
+  npx playwright install --with-deps
 
 Run tests:
 
 npm run test:e2e
+
+Run the modal test only:
+
+npm run test:e2e:modal
 
 Run a single test file (useful when developing):
 
