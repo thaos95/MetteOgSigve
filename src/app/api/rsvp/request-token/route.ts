@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
 import { verifyRecaptchaToken } from '../../../../lib/recaptcha';
-import { isRateLimited } from '../../../../lib/rateLimit';
+import { isRateLimited, slidingWindowLimit } from '../../../../lib/rateLimit';
 import crypto from 'crypto';
 const now = ()=>new Date().toISOString();
 const log = (...args: any[])=>console.log('[request-token]', now(), ...args);
@@ -9,8 +9,10 @@ const log = (...args: any[])=>console.log('[request-token]', now(), ...args);
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, name, purpose } = body; // purpose: 'edit' | 'cancel'
+    let { email, name, purpose } = body; // purpose: 'edit' | 'cancel'
     if (!email && !name) return NextResponse.json({ error: 'email or name required' }, { status: 400 });
+    // normalize email for lookups & rate-limit keys
+    email = email ? String(email).trim().toLowerCase() : undefined;
 
     // find rsvp
     let q = supabaseServer.from('rsvps').select('*').limit(1);
@@ -43,17 +45,40 @@ export async function POST(req: Request) {
 
     try {
       const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-      const ipKey = `rl:tok:req:ip:${ip}`;
-      if (typeof isRateLimited !== 'function') {
-        console.error('rate limit check error: isRateLimited not available');
-      } else {
-        const rIp = await isRateLimited(ipKey, Number(process.env.RL_TOKEN_REQ_PER_IP || 20), Number(process.env.RL_TOKEN_REQ_WINDOW || 3600));
-        if (rIp.limited) return NextResponse.json({ error: 'rate limit exceeded (ip)' }, { status: 429, headers: { 'Retry-After': String(rIp.retryAfter) } });
-        if (email) {
-          const emailKey = `rl:tok:req:email:${email}`;
-          const rEmail = await isRateLimited(emailKey, Number(process.env.RL_TOKEN_REQ_PER_EMAIL || 5), Number(process.env.RL_TOKEN_REQ_WINDOW || 3600));
-          if (rEmail.limited) return NextResponse.json({ error: 'rate limit exceeded (email)' }, { status: 429, headers: { 'Retry-After': String(rEmail.retryAfter) } });
-        }
+      const device = req.headers.get('x-device-id') || body.deviceId || 'unknown-device';
+
+      // Device-level sliding window (short window, tight limit)
+      const deviceKey = `rl:sw:token:device:${device}`;
+      const deviceLimit = Number(process.env.RL_SW_TOKEN_DEVICE_LIMIT || 10);
+      const deviceWindowMs = Number(process.env.RL_TOKEN_REQ_WINDOW || 3600) * 1000;
+      const rDev = await slidingWindowLimit(deviceKey, deviceLimit, deviceWindowMs);
+      if (rDev.limited) {
+        // Escalate: require recaptcha to proceed if device is limited
+        const captchaToken = body.recaptchaToken;
+        if (!captchaToken) return NextResponse.json({ error: 'recaptcha required' }, { status: 400 });
+        try {
+          const verified = await verifyRecaptchaToken(captchaToken, 'request-token');
+          if (process.env.NODE_ENV !== 'production') console.log('recaptcha verify result (escalation)', verified);
+          if (!verified.success || (verified.score !== undefined && verified.score < 0.5)) {
+            return NextResponse.json({ error: 'recaptcha failed' }, { status: 429 });
+          }
+        } catch (e) { console.error('recaptcha check error during escalation', e); }
+      }
+
+      // IP sliding window (bigger limit)
+      const ipKey = `rl:sw:token:ip:${ip}`;
+      const ipLimit = Number(process.env.RL_SW_TOKEN_IP_LIMIT || 50);
+      const ipWindowMs = Number(process.env.RL_TOKEN_REQ_WINDOW || 3600) * 1000;
+      const rIp = await slidingWindowLimit(ipKey, ipLimit, ipWindowMs);
+      if (rIp.limited) return NextResponse.json({ error: 'rate limit exceeded (ip)' }, { status: 429, headers: { 'Retry-After': String(rIp.retryAfter) } });
+
+      // Per-email sliding window
+      if (email) {
+        const emailKey = `rl:sw:token:email:${email}`;
+        const baseLimit = Number(process.env.RL_SW_TOKEN_EMAIL_LIMIT || 5);
+        const emailLimit = (rsv?.verified ? baseLimit * 2 : baseLimit);
+        const rEmail = await slidingWindowLimit(emailKey, emailLimit, ipWindowMs);
+        if (rEmail.limited) return NextResponse.json({ error: 'rate limit exceeded (email)' }, { status: 429, headers: { 'Retry-After': String(rEmail.retryAfter) } });
       }
     } catch (e) { console.error('rate limit check error', e); }
 

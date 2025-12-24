@@ -23,7 +23,14 @@ export async function PUT(req: Request, ctx: any) {
     }
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
     const body = await req.json();
-    const { name, email, attending, guests, notes, token, adminPassword } = body;
+    const { token, adminPassword } = body;
+    // Support updates to new schema
+    const firstName = body.firstName ? String(body.firstName).trim() : null;
+    const lastName = body.lastName ? String(body.lastName).trim() : null;
+    const email = body.email ? String(body.email).trim().toLowerCase() : null;
+    const attending = body.attending !== undefined ? !!body.attending : undefined;
+    const notes = body.notes !== undefined ? String(body.notes).trim() : undefined;
+    const party = Array.isArray(body.party) ? body.party.map((p: any) => ({ firstName: String(p.firstName || '').trim(), lastName: String(p.lastName || '').trim(), attending: !!p.attending })) : undefined;
 
     // require either adminPassword or valid token for edits
     if (!adminPassword && !token) return NextResponse.json({ error: 'adminPassword or token required' }, { status: 401 });
@@ -45,9 +52,18 @@ export async function PUT(req: Request, ctx: any) {
     }
 
     // basic validation
-    if (!name) return NextResponse.json({ error: 'Name required' }, { status: 400 });
+    if ((firstName !== null && !firstName) || (lastName !== null && !lastName)) return NextResponse.json({ error: 'First and last name required' }, { status: 400 });
 
-    const { data, error } = await supabaseServer.from('rsvps').update({ name, email, attending, guests, notes, updated_at: new Date().toISOString() }).eq('id', id).select('*');
+    const updates: any = { updated_at: new Date().toISOString() };
+    if (firstName !== null) updates.first_name = firstName;
+    if (lastName !== null) updates.last_name = lastName;
+    if (firstName !== null || lastName !== null) updates.name = `${firstName ?? ''} ${lastName ?? ''}`.trim();
+    if (email !== null) updates.email = email;
+    if (attending !== undefined) updates.attending = attending;
+    if (notes !== undefined) updates.notes = notes;
+    if (party !== undefined) updates.party = party;
+
+    const { data, error } = await supabaseServer.from('rsvps').update(updates).eq('id', id).select('*');
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     // send update confirmation

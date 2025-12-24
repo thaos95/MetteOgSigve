@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 
 export default function RSVPForm() {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [attending, setAttending] = useState(true);
-  const [guests, setGuests] = useState(0);
+  const [party, setParty] = useState<Array<{ firstName: string; lastName: string; attending?: boolean }>>([]);
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [showExisting, setShowExisting] = useState<any | null>(null);
@@ -14,6 +15,15 @@ export default function RSVPForm() {
   const [recaptchaReady, setRecaptchaReady] = useState(false);
   
   useEffect(() => {
+    // ensure device id exists for layered rate limits
+    try {
+      const existing = localStorage.getItem('__device_id');
+      if (!existing) {
+        const id = (crypto as any)?.randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('__device_id', id);
+      }
+    } catch (e) { /* ignore */ }
+
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
     if (!siteKey) return;
     const s = document.createElement('script');
@@ -46,10 +56,11 @@ export default function RSVPForm() {
         const data = await res.json();
         if (data?.ok && data.rsvp) {
           const r = data.rsvp;
-          setName(r.name ?? '');
+          setFirstName(r.first_name ?? (r.name ? String(r.name).split(/\s+/)[0] : ''));
+          setLastName(r.last_name ?? (r.name ? String(r.name).split(/\s+/).slice(-1).join(' ') : ''));
           setEmail(r.email ?? '');
           setAttending(!!r.attending);
-          setGuests(r.guests ?? 0);
+          setParty(Array.isArray(r.party) ? r.party : (r.party ? JSON.parse(r.party) : []));
           setNotes(r.notes ?? '');
           setEditId(r.id);
           // keep token in URL for submit flow
@@ -72,11 +83,23 @@ export default function RSVPForm() {
       const tokenFromUrl = urlParams.get('token');
 
       const recaptchaToken = await getRecaptchaToken(editId ? 'edit' : 'rsvp');
-      const payload = editId ? { name, email, attending, guests, notes, id: editId, token: tokenFromUrl } : { name, email, attending, guests, notes };
-      if (recaptchaToken) (payload as any).recaptchaToken = recaptchaToken;
+      const payload: any = editId ? { id: editId, token: tokenFromUrl } : {};
+      payload.firstName = firstName;
+      payload.lastName = lastName;
+      payload.email = email;
+      payload.attending = attending;
+      payload.party = party;
+      payload.notes = notes;
+      if (recaptchaToken) payload.recaptchaToken = recaptchaToken;
+
+      // include device id header for layered rate limits
+      let deviceId: string | null = null;
+      try { deviceId = localStorage.getItem('__device_id'); } catch (e) { /* ignore */ }
+      const headers: any = { "Content-Type": "application/json" };
+      if (deviceId) headers['x-device-id'] = deviceId;
       const res = await fetch(editId ? `/api/rsvp/${editId}` : "/api/rsvp", {
         method: editId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(payload)
       });
 
@@ -127,17 +150,23 @@ export default function RSVPForm() {
 
   return (
     <form onSubmit={submit} className="space-y-4 max-w-lg">
-      <div>
-        <label className="block text-sm">Name</label>
-        <input value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm">First name</label>
+          <input value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
+        </div>
+        <div>
+          <label className="block text-sm">Last name</label>
+          <input value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
+        </div>
       </div>
 
-      <div>
+      <div className="mt-4">
         <label className="block text-sm">Email</label>
         <input value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full p-2 border rounded" type="email" />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mt-4">
         <label className="flex items-center gap-2">
           <input type="radio" checked={attending} onChange={() => setAttending(true)} /> Attending
         </label>
@@ -146,9 +175,25 @@ export default function RSVPForm() {
         </label>
       </div>
 
-      <div>
-        <label className="block text-sm">Number of guests</label>
-        <input value={guests} onChange={e => setGuests(Number(e.target.value))} className="mt-1 w-24 p-2 border rounded" type="number" min={0} />
+      <div className="mt-4">
+        <label className="block text-sm">Guest list</label>
+        <div className="mt-2 space-y-2">
+          {party.map((p, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <input className="p-2 border rounded w-1/3" value={p.firstName} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, firstName: e.target.value } : pp))} placeholder="First" />
+              <input className="p-2 border rounded w-1/3" value={p.lastName} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, lastName: e.target.value } : pp))} placeholder="Last" />
+              <label className="flex items-center gap-1">
+                <input type="checkbox" checked={!!p.attending} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, attending: e.target.checked } : pp))} /> Attending
+              </label>
+              <button type="button" onClick={() => setParty(party.filter((_, idx) => idx !== i))} className="px-2 py-1 bg-red-600 text-white rounded">Remove</button>
+            </div>
+          ))}
+          <div>
+            <button type="button" onClick={() => setParty([...party, { firstName: '', lastName: '', attending: true }])} className="px-3 py-1 bg-gray-200 rounded">Add guest</button>
+            <button type="button" onClick={() => setParty(party.map(p => ({ ...p, attending: true })))} className="ml-2 px-3 py-1 bg-gray-200 rounded">Mark all attending</button>
+            <button type="button" onClick={() => setParty(party.map(p => ({ ...p, attending: false })))} className="ml-2 px-3 py-1 bg-gray-200 rounded">Mark all not attending</button>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -166,10 +211,33 @@ export default function RSVPForm() {
         <div className="mt-4 p-3 border rounded bg-yellow-50">
           <div className="text-sm">We found an existing RSVP that may match:</div>
           <div className="mt-2">
-            <strong>{showExisting.name}</strong> — {showExisting.email} — {showExisting.attending ? 'Attending' : 'Not attending'} — Guests: {showExisting.guests}
+            <strong>{showExisting.name ?? `${showExisting.first_name} ${showExisting.last_name}`}</strong> — {showExisting.email}
+            <div className="mt-2 text-sm">Party:</div>
+            <ul className="ml-4 list-disc text-sm">
+              <li>{showExisting.first_name} {showExisting.last_name} — {showExisting.attending ? 'Attending' : 'Not attending'}</li>
+              {(showExisting.party && Array.isArray(showExisting.party) ? showExisting.party : []).map((p: any, i: number) => (
+                <li key={i}>{p.firstName} {p.lastName} — {p.attending ? 'Attending' : 'Not attending'}</li>
+              ))}
+            </ul>
             <div className="mt-2 flex gap-2">
-              <button onClick={() => startEditFromExisting(showExisting)} className="px-3 py-1 bg-green-600 text-white rounded">Edit this RSVP</button>
-              <button onClick={() => cancelExisting(showExisting.id)} className="px-3 py-1 bg-red-600 text-white rounded">Cancel RSVP</button>
+              <button type="button" onClick={() => startEditFromExisting(showExisting)} className="px-3 py-1 bg-green-600 text-white rounded">Edit this RSVP</button>
+              <button type="button" onClick={() => cancelExisting(showExisting.id)} className="px-3 py-1 bg-red-600 text-white rounded">Cancel RSVP</button>
+              <button type="button" onClick={async () => {
+                // create new anyway by resubmitting with overrideDuplicate
+                try {
+                  const payload: any = { firstName, lastName, email, attending, party, notes, overrideDuplicate: true };
+                  const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
+                  const headers: any = { 'Content-Type': 'application/json' };
+                  if (deviceId) headers['x-device-id'] = deviceId;
+                  const res = await fetch('/api/rsvp', { method: 'POST', headers, body: JSON.stringify(payload) });
+                  if (res.ok) {
+                    setStatus('done');
+                    setShowExisting(null);
+                  } else {
+                    const d = await res.json(); alert(d.error || 'Failed');
+                  }
+                } catch (e) { alert('Failed'); }
+              }} className="px-3 py-1 bg-blue-600 text-white rounded">Create new anyway</button>
             </div>
           </div>
         </div>
@@ -183,7 +251,10 @@ export default function RSVPForm() {
             const recaptchaToken = await getRecaptchaToken('request-token');
             const body = { email, purpose: 'edit' } as any;
             if (recaptchaToken) body.recaptchaToken = recaptchaToken;
-            const res = await fetch('/api/rsvp/request-token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
+            const headers: any = { 'Content-Type': 'application/json' };
+            if (deviceId) headers['x-device-id'] = deviceId;
+            const res = await fetch('/api/rsvp/request-token', { method: 'POST', headers, body: JSON.stringify(body) });
             if (res.ok) { alert('A secure link was sent to your email (if it exists in our records).'); } else { const d = await res.json(); alert(d.error ?? 'Failed'); }
           }} className="px-3 py-2 bg-indigo-600 text-white rounded">Request edit/cancel link</button>
         </div>
