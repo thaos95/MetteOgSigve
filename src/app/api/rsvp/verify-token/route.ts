@@ -19,13 +19,17 @@ export async function GET(req: Request) {
     const now = new Date();
     if (row.expires_at && new Date(row.expires_at) < now) return NextResponse.json({ error: 'Token expired' }, { status: 410 });
 
-    // mark token used and set RSVP verified=true
-    const { error: tokenUpdateErr } = await supabaseServer.from('rsvp_tokens').update({ used: true }).eq('id', row.id);
-    if (tokenUpdateErr) console.error('Could not mark token used', tokenUpdateErr);
-    const { data: updatedRsvp, error: rsvpUpdateErr } = await supabaseServer.from('rsvps').update({ verified: true, updated_at: new Date().toISOString() }).eq('id', row.rsvp_id).select('*').limit(1);
-    if (rsvpUpdateErr) console.error('Could not update rsvp verified', rsvpUpdateErr);
+    // For 'verify' purpose tokens, mark token used and set RSVP verified=true
+    if (row.purpose === 'verify') {
+      const { error: tokenUpdateErr } = await supabaseServer.from('rsvp_tokens').update({ used: true }).eq('id', row.id);
+      if (tokenUpdateErr) console.error('Could not mark token used', tokenUpdateErr);
+      const { data: updatedRsvp, error: rsvpUpdateErr } = await supabaseServer.from('rsvps').update({ verified: true, updated_at: new Date().toISOString() }).eq('id', row.rsvp_id).select('*').limit(1);
+      if (rsvpUpdateErr) console.error('Could not update rsvp verified', rsvpUpdateErr);
+      return NextResponse.json({ ok: true, rsvp: updatedRsvp?.[0] ?? row.rsvps, purpose: row.purpose });
+    }
 
-    return NextResponse.json({ ok: true, rsvp: updatedRsvp?.[0] ?? row.rsvps, purpose: row.purpose });
+    // For edit/cancel tokens, do not mark token used on lookup — return RSVP for client to use the token for action
+    return NextResponse.json({ ok: true, rsvp: row.rsvps, purpose: row.purpose });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 });
   }

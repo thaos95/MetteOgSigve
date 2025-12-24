@@ -72,9 +72,10 @@ export async function POST(req: Request) {
       const rIp = await slidingWindowLimit(ipKey, ipLimit, ipWindowMs);
       if (rIp.limited) return NextResponse.json({ error: 'rate limit exceeded (ip)' }, { status: 429, headers: { 'Retry-After': String(rIp.retryAfter) } });
 
-      // Per-email sliding window
-      if (email) {
-        const emailKey = `rl:sw:token:email:${email}`;
+      // Per-email sliding window (respect optional sendToEmail if provided)
+      const sendTo = body.sendToEmail ? String(body.sendToEmail).trim().toLowerCase() : email;
+      if (sendTo) {
+        const emailKey = `rl:sw:token:email:${sendTo}`;
         const baseLimit = Number(process.env.RL_SW_TOKEN_EMAIL_LIMIT || 5);
         const emailLimit = (rsv?.verified ? baseLimit * 2 : baseLimit);
         const rEmail = await slidingWindowLimit(emailKey, emailLimit, ipWindowMs);
@@ -82,8 +83,10 @@ export async function POST(req: Request) {
       }
     } catch (e) { console.error('rate limit check error', e); }
 
-    // Do not allow token requests for unverified email addresses
-    if (rsv.email && !rsv.verified) return NextResponse.json({ error: 'Email not verified; please verify your RSVP first' }, { status: 403 });
+    // Do not allow token requests for unverified email addresses unless the request includes a different target email and explicit update intent
+    if (rsv.email && !rsv.verified && !(body.sendToEmail && body.updateEmail)) {
+      return NextResponse.json({ error: 'Email not verified; please verify your RSVP first' }, { status: 403 });
+    }
 
     const token = crypto.randomBytes(20).toString('hex');
     const crypto2 = await import('crypto');
@@ -96,6 +99,18 @@ export async function POST(req: Request) {
     // For local testing, log the raw token (do not enable in production)
     if (process.env.NODE_ENV !== 'production') console.log('DEV request-token:', token);
 
+    // Optionally update the RSVP's email if requested
+    const sendTo = body.sendToEmail ? String(body.sendToEmail).trim().toLowerCase() : email;
+    if (body.updateEmail && sendTo) {
+      // ensure no other RSVP uses that email
+      const { data: dup, error: dupErr } = await supabaseServer.from('rsvps').select('id').eq('email', sendTo).limit(1);
+      if (dupErr) return NextResponse.json({ error: dupErr.message }, { status: 500 });
+      if (dup && dup.length && dup[0].id !== rsv.id) return NextResponse.json({ error: 'email already in use by another RSVP' }, { status: 409 });
+      const { error: updErr } = await supabaseServer.from('rsvps').update({ email: sendTo, verified: false, updated_at: new Date().toISOString() }).eq('id', rsv.id);
+      if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
+      log('Updated RSVP email for rsvp_id', rsv.id, 'to', sendTo);
+    }
+
     // send token email
     try {
       const mod = await import('../../../../lib/mail');
@@ -103,8 +118,8 @@ export async function POST(req: Request) {
       const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || ''}/rsvp?token=${token}`;
       const html = `<p>Hi ${rsv.name},</p><p>Use the secure link below to ${purpose === 'cancel' ? 'cancel' : 'edit'} your RSVP. The link expires in 1 hour.</p><p><a href="${link}">Open RSVP</a></p>`;
       if (typeof sendAsync === 'function') {
-        sendAsync({ to: rsv.email ?? rsv.email, subject: 'Mette & Sigve — RSVP secure link', text: `Open your RSVP: ${link}`, html });
-        log('Triggered async token email for rsvp_id', rsv.id);
+        sendAsync({ to: sendTo ?? rsv.email ?? rsv.email, subject: 'Mette & Sigve — RSVP secure link', text: `Open your RSVP: ${link}`, html });
+        log('Triggered async token email for rsvp_id', rsv.id, 'to', sendTo ?? rsv.email);
       } else {
         console.warn('Mail helper not available; skipping send');
       }
@@ -113,6 +128,8 @@ export async function POST(req: Request) {
       if (process.env.NODE_ENV === 'production') return NextResponse.json({ error: 'failed to schedule email' }, { status: 500 });
     }
 
+    // respond with dev token for local testing
+    if (process.env.NODE_ENV !== 'production') return NextResponse.json({ ok: true, devToken: token });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 });

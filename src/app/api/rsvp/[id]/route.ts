@@ -112,7 +112,10 @@ export async function DELETE(req: Request, ctx: any) {
     if (adminPassword && adminPassword !== process.env.ADMIN_PASSWORD) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
     if (!adminPassword) {
-      const { data: tk, error: tkErr } = await supabaseServer.from('rsvp_tokens').select('*').eq('token', token).eq('rsvp_id', id).limit(1);
+      // verify token by hashing (consistent with PUT and verify-token)
+      const crypto = await import('crypto');
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const { data: tk, error: tkErr } = await supabaseServer.from('rsvp_tokens').select('*').eq('token_hash', tokenHash).eq('rsvp_id', id).limit(1);
       if (tkErr) return NextResponse.json({ error: tkErr.message }, { status: 500 });
       const row = tk?.[0];
       if (!row) return NextResponse.json({ error: 'invalid token' }, { status: 401 });

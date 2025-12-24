@@ -16,7 +16,7 @@ test('duplicate prompt flow: shows existing suggestion and can create anyway', a
   await page.goto(`${base}/rsvp`);
   await page.getByLabel('First name').fill('Test');
   await page.getByLabel('Last name').fill(`Dup${ts}`);
-  await page.getByLabel('Email').fill(`dup+${ts}+2@example.com`);
+  await page.getByLabel('Email', { exact: true }).fill(`dup+${ts}+2@example.com`);
   await page.getByRole('button', { name: 'Send RSVP' }).click();
 
   // Wait for the duplicate prompt UI

@@ -55,11 +55,12 @@ describe('RSVPForm', () => {
     await user.click(screen.getByRole('button', { name: /add guest/i }));
     await user.click(screen.getByRole('button', { name: /add guest/i }));
 
-    // uncheck both by toggling each checkbox
+    // uncheck both by toggling each guest checkbox (filter by label text)
     const checkboxes = screen.getAllByRole('checkbox');
-    // the first checkbox is the main attending radio, the rest include guest attending checkboxes
-    // find guest attending checkboxes by excluding the first
-    const guestCheckboxes = checkboxes.slice(1);
+    const guestCheckboxes = checkboxes.filter(cb => {
+      const label = cb.closest('label')?.textContent?.trim();
+      return label === 'Attending';
+    });
     for (const cb of guestCheckboxes) await user.click(cb); // toggle off
 
     // ensure they're unchecked
@@ -68,8 +69,76 @@ describe('RSVPForm', () => {
     // click mark all attending
     await user.click(screen.getByRole('button', { name: /mark all attending/i }));
 
-    // now they should be checked
-    const postCheckboxes = screen.getAllByRole('checkbox').slice(1);
+    // now they should be checked (filter by label again)
+    const postCheckboxes = screen.getAllByRole('checkbox').filter(cb => {
+      const label = cb.closest('label')?.textContent?.trim();
+      return label === 'Attending';
+    });
     for (const cb of postCheckboxes) expect(cb).toBeChecked();
+  });
+
+  test('submits update with pasted token when provided', async () => {
+    // prepare fetch mock: first call for verify-token, second for PUT
+    const verifyRes = { ok: true, json: async () => ({ ok: true, rsvp: { id: 'rsvp-1', first_name: 'Existing', last_name: 'Person', email: 'existing@example.com', party: [] } }) };
+    const putRes = { ok: true };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(verifyRes)
+      .mockResolvedValueOnce(putRes);
+    (globalThis as any).fetch = fetchMock;
+
+    render(<RSVPForm />);
+
+    await user.type(screen.getByLabelText(/first name/i), 'Jane');
+    await user.type(screen.getByLabelText(/last name/i), 'Doe');
+    await user.type(screen.getByPlaceholderText(/Paste token/i), 'token-abc');
+
+    // click Use token to load RSVP
+    await user.click(screen.getByRole('button', { name: /Use token/i }));
+
+    // now submit update (handle either Send or Update button text)
+    const submitBtn = screen.getByRole('button', { name: /send rsvp|update rsvp/i });
+    await user.click(submitBtn);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const opts = fetchMock.mock.calls[1][1];
+    const body = JSON.parse(opts.body);
+    // token should be present in payload (as token field when editing)
+    expect(body.token).toBe('token-abc');
+    expect(body.id).toBe('rsvp-1');
+  });
+
+  test('request-token includes sendToEmail and updateEmail', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    (globalThis as any).fetch = fetchMock;
+
+    render(<RSVPForm />);
+
+    // fill email and send-to
+    await user.type(screen.getByLabelText(/^Email$/i), 'alice@example.com');
+    await user.type(screen.getByPlaceholderText(/Send to email/i), 'alt@example.com');
+    await user.click(screen.getByLabelText(/Update RSVP email/i));
+
+    await user.click(screen.getByRole('button', { name: /Request edit\/cancel link/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const opts = fetchMock.mock.calls[0][1];
+    const body = JSON.parse(opts.body);
+    expect(body.sendToEmail).toBe('alt@example.com');
+    expect(body.updateEmail).toBe(true);
+  });
+
+  test('dev generate token fills pasted token', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ token: 'dev-123' }) });
+    (globalThis as any).fetch = fetchMock;
+
+    render(<RSVPForm />);
+
+    await user.type(screen.getByLabelText(/^Email$/i), 'bob@example.com');
+    await user.click(screen.getByRole('button', { name: /Generate test token \(dev\)/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    // pasted token input should now contain dev token
+    const pasted = screen.getByPlaceholderText(/Paste token here/i) as HTMLInputElement;
+    expect(pasted.value).toBe('dev-123');
   });
 });

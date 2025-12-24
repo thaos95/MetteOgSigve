@@ -12,6 +12,9 @@ export default function RSVPForm() {
   const [showExisting, setShowExisting] = useState<any | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [tokenRequested, setTokenRequested] = useState<string | null>(null);
+  const [pastedToken, setPastedToken] = useState<string>('');
+  const [sendToEmail, setSendToEmail] = useState<string>('');
+  const [updateEmail, setUpdateEmail] = useState<boolean>(false);
   const [recaptchaReady, setRecaptchaReady] = useState(false);
   
   useEffect(() => {
@@ -65,6 +68,8 @@ export default function RSVPForm() {
           setEditId(r.id);
           // keep token in URL for submit flow
           setTokenRequested(token);
+          // also store pasted token for UI convenience
+          setPastedToken(token);
         }
       } catch (e) {
         // ignore
@@ -81,9 +86,10 @@ export default function RSVPForm() {
       // If token is present in URL, include it to allow update/cancel without admin
       const urlParams = new URLSearchParams(window.location.search);
       const tokenFromUrl = urlParams.get('token');
+      const tokenToUse = pastedToken || tokenFromUrl || null;
 
       const recaptchaToken = await getRecaptchaToken(editId ? 'edit' : 'rsvp');
-      const payload: any = editId ? { id: editId, token: tokenFromUrl } : {};
+      const payload: any = editId ? { id: editId, token: tokenToUse } : {};
       payload.firstName = firstName;
       payload.lastName = lastName;
       payload.email = email;
@@ -139,12 +145,14 @@ export default function RSVPForm() {
 
   async function cancelExisting(id: string) {
     if (!confirm('Cancel this RSVP?')) return;
-    const res = await fetch(`/api/rsvp/${id}`, { method: 'DELETE' });
+    const body: any = {};
+    if (pastedToken) body.token = pastedToken;
+    const res = await fetch(`/api/rsvp/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (res.ok) {
       alert('RSVP cancelled');
       setShowExisting(null);
     } else {
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
       alert(d.error ?? 'Failed to cancel');
     }
   }
@@ -245,19 +253,80 @@ export default function RSVPForm() {
       )}
 
       <div className="mt-4 text-sm text-gray-600">
-        <div>If you want to receive a secure edit/cancel link by email, enter your <strong>email</strong> and click the button below:</div>
-        <div className="mt-2">
-          <button onClick={async () => {
-            if (!email) { alert('Please enter your email first'); return; }
-            const recaptchaToken = await getRecaptchaToken('request-token');
-            const body = { email, purpose: 'edit' } as any;
-            if (recaptchaToken) body.recaptchaToken = recaptchaToken;
-            const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
-            const headers: any = { 'Content-Type': 'application/json' };
-            if (deviceId) headers['x-device-id'] = deviceId;
-            const res = await fetch('/api/rsvp/request-token', { method: 'POST', headers, body: JSON.stringify(body) });
-            if (res.ok) { alert('A secure link was sent to your email (if it exists in our records).'); } else { const d = await res.json(); alert(d.error ?? 'Failed'); }
-          }} className="px-3 py-2 bg-indigo-600 text-white rounded">Request edit/cancel link</button>
+        <div>If you want to receive a secure edit/cancel link by email, enter your <strong>email</strong> and click the button below. You can optionally specify a different address to send the link to and update the RSVP's email on record.</div>
+        <div className="mt-2 space-y-2">
+          <div className="flex gap-2">
+            <input placeholder="Send to email (optional)" value={sendToEmail} onChange={e => setSendToEmail(e.target.value)} className="p-2 border rounded w-1/2" type="email" />
+            <label className="flex items-center gap-2"><input type="checkbox" checked={updateEmail} onChange={e => setUpdateEmail(e.target.checked)} /> Update RSVP email</label>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={async () => {
+              if (!email && !sendToEmail) { alert('Please enter your email first or specify an email to send to'); return; }
+              const recaptchaToken = await getRecaptchaToken('request-token');
+              const body = { email, purpose: 'edit' } as any;
+              if (recaptchaToken) body.recaptchaToken = recaptchaToken;
+              if (sendToEmail) body.sendToEmail = sendToEmail;
+              if (updateEmail) body.updateEmail = true;
+              const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
+              const headers: any = { 'Content-Type': 'application/json' };
+              if (deviceId) headers['x-device-id'] = deviceId;
+              const res = await fetch('/api/rsvp/request-token', { method: 'POST', headers, body: JSON.stringify(body) });
+              const d = await res.json().catch(() => ({}));
+              if (res.ok) {
+                if (d?.devToken) {
+                  // show dev token for convenience
+                  alert('Development token: ' + d.devToken);
+                  setPastedToken(d.devToken);
+                } else {
+                  alert('A secure link was sent to the target email (if it exists in our records).');
+                }
+              } else { alert(d.error ?? 'Failed'); }
+            }} className="px-3 py-2 bg-indigo-600 text-white rounded">Request edit/cancel link</button>
+
+            {process.env.NODE_ENV !== 'production' && (
+              <button onClick={async () => {
+                // dev helper: generate test token and pre-fill
+                const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
+                const headers: any = { 'Content-Type': 'application/json' };
+                if (deviceId) headers['x-device-id'] = deviceId;
+                const res = await fetch('/api/rsvp/generate-test-token', { method: 'POST', headers, body: JSON.stringify({ email }) });
+                const d = await res.json();
+                if (res.ok && d?.token) {
+                  alert('Generated test token: ' + d.token);
+                  setPastedToken(d.token);
+                } else {
+                  alert(d.error ?? 'Failed to generate test token');
+                }
+              }} className="px-3 py-2 bg-yellow-600 text-black rounded">Generate test token (dev)</button>
+            )}
+          </div>
+
+          <div className="mt-2">
+            <label className="block text-sm">Paste token (if you received one)</label>
+            <div className="flex gap-2 mt-1">
+              <input value={pastedToken} onChange={e => setPastedToken(e.target.value)} placeholder="Paste token here" className="w-full p-2 border rounded" />
+              <button type="button" onClick={async () => {
+                if (!pastedToken) { alert('Paste a token first'); return; }
+                try {
+                  const res = await fetch(`/api/rsvp/verify-token?token=${encodeURIComponent(pastedToken)}`);
+                  if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error ?? 'Invalid token'); return; }
+                  const data = await res.json();
+                  if (data?.ok && data.rsvp) {
+                    const r = data.rsvp;
+                    setFirstName(r.first_name ?? (r.name ? String(r.name).split(/\s+/)[0] : ''));
+                    setLastName(r.last_name ?? (r.name ? String(r.name).split(/\s+/).slice(-1).join(' ') : ''));
+                    setEmail(r.email ?? '');
+                    setAttending(!!r.attending);
+                    setParty(Array.isArray(r.party) ? r.party : (r.party ? JSON.parse(r.party) : []));
+                    setNotes(r.notes ?? '');
+                    setEditId(r.id);
+                    setTokenRequested(pastedToken);
+                    alert('Token applied — you can now update your RSVP');
+                  }
+                } catch (e) { alert('Failed to verify token'); }
+              }} className="px-3 py-2 bg-gray-200 rounded">Use token</button>
+            </div>
+          </div>
         </div>
       </div>
     </form>
