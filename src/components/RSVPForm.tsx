@@ -124,6 +124,15 @@ export default function RSVPForm() {
         } else {
           setStatus("error");
         }
+      } else if (res.status === 401) {
+        // Token required for edit - guide user
+        const data = await res.json().catch(() => ({}));
+        if (data.error?.includes('token required') || data.error?.includes('adminPassword')) {
+          setStatus("idle");
+          alert('To update your RSVP, you need a secure link. Please expand "Need to edit or cancel an existing RSVP?" below and request an edit link.');
+        } else {
+          setStatus("error");
+        }
       } else {
         setStatus("error");
       }
@@ -133,6 +142,7 @@ export default function RSVPForm() {
   }
 
   async function startEditFromExisting(existing: any) {
+    // Prefill the form with existing data
     setFirstName(existing.first_name ?? (existing.name ? String(existing.name).split(/\s+/)[0] : ""));
     setLastName(existing.last_name ?? (existing.name ? String(existing.name).split(/\s+/).slice(-1).join(' ') : ""));
     setEmail(existing.email ?? "");
@@ -141,6 +151,46 @@ export default function RSVPForm() {
     setNotes(existing.notes ?? "");
     setEditId(existing.id);
     setShowExisting(null);
+    
+    // IMPORTANT: When editing from duplicate detection, user needs a token.
+    // If no token yet, automatically request one and guide the user.
+    if (!pastedToken) {
+      const email = existing.email;
+      if (email) {
+        // Auto-request edit token to the RSVP email
+        try {
+          const recaptchaToken = await getRecaptchaToken('request-token');
+          const body: any = { email, purpose: 'edit' };
+          if (recaptchaToken) body.recaptchaToken = recaptchaToken;
+          const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
+          const headers: any = { 'Content-Type': 'application/json' };
+          if (deviceId) headers['x-device-id'] = deviceId;
+          const res = await fetch('/api/rsvp/request-token', { method: 'POST', headers, body: JSON.stringify(body) });
+          const d = await res.json().catch(() => ({}));
+          if (res.ok) {
+            if (d?.devToken) {
+              // Dev mode: auto-apply token
+              setPastedToken(d.devToken);
+              alert('Development mode: Edit token applied automatically. You can now update your RSVP.');
+            } else {
+              alert(`We've sent a secure link to ${email}. Please check your inbox and click the link to complete your edit.`);
+              // Clear edit mode since they need to come back via token link
+              setEditId(null);
+            }
+          } else {
+            alert(d.error ?? 'Could not request edit link. Please try again.');
+            setEditId(null);
+          }
+        } catch (e) {
+          console.error('Failed to request edit token', e);
+          alert('Could not request edit link. Please try again.');
+          setEditId(null);
+        }
+      } else {
+        alert('This RSVP has no email on record. Please contact us directly to make changes.');
+        setEditId(null);
+      }
+    }
   }
 
   async function cancelExisting(id: string) {

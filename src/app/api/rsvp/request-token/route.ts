@@ -83,10 +83,10 @@ export async function POST(req: Request) {
       }
     } catch (e) { console.error('rate limit check error', e); }
 
-    // Do not allow token requests for unverified email addresses unless the request includes a different target email and explicit update intent
-    if (rsv.email && !rsv.verified && !(body.sendToEmail && body.updateEmail)) {
-      return NextResponse.json({ error: 'Email not verified; please verify your RSVP first' }, { status: 403 });
-    }
+    // POLICY: Allow edit/cancel token requests even for unverified RSVPs
+    // Rationale: Token delivery to the email inbox itself proves ownership.
+    // Rate limiting + CAPTCHA provide abuse protection.
+    // When the guest uses the edit token, we implicitly verify their RSVP.
 
     const token = crypto.randomBytes(20).toString('hex');
     const crypto2 = await import('crypto');

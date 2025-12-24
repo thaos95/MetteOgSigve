@@ -49,6 +49,10 @@ export async function PUT(req: Request, ctx: any) {
 
       // mark token used
       await supabaseServer.from('rsvp_tokens').update({ used: true }).eq('id', row.id);
+
+      // POLICY: Using an edit/cancel token proves inbox ownership → mark RSVP verified
+      // This removes the verification dead-end for guests who didn't click the original link
+      await supabaseServer.from('rsvps').update({ verified: true, updated_at: new Date().toISOString() }).eq('id', id);
     }
 
     // basic validation
@@ -122,6 +126,9 @@ export async function DELETE(req: Request, ctx: any) {
       if (row.used) return NextResponse.json({ error: 'token already used' }, { status: 401 });
       if (row.expires_at && new Date(row.expires_at) < new Date()) return NextResponse.json({ error: 'token expired' }, { status: 410 });
       await supabaseServer.from('rsvp_tokens').update({ used: true }).eq('id', row.id);
+
+      // POLICY: Using an edit/cancel token proves inbox ownership → mark RSVP verified
+      await supabaseServer.from('rsvps').update({ verified: true, updated_at: new Date().toISOString() }).eq('id', id);
     }
 
     const { data: existing, error: fetchErr } = await supabaseServer.from('rsvps').select('*').eq('id', id).limit(1);
