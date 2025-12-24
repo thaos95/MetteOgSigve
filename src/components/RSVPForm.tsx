@@ -153,18 +153,18 @@ export default function RSVPForm() {
     <form onSubmit={submit} className="space-y-4 max-w-lg">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm">First name</label>
-          <input value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
+          <label htmlFor="first-name" className="block text-sm">First name</label>
+          <input id="first-name" value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
         </div>
         <div>
-          <label className="block text-sm">Last name</label>
-          <input value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
+          <label htmlFor="last-name" className="block text-sm">Last name</label>
+          <input id="last-name" value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
         </div>
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm">Email</label>
-        <input value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full p-2 border rounded" type="email" />
+        <label htmlFor="email" className="block text-sm">Email</label>
+        <input id="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full p-2 border rounded" type="email" />
       </div>
 
       <div className="flex items-center gap-4 mt-4">

@@ -5,8 +5,9 @@ const base = process.env.BASE_URL || 'http://localhost:3000';
 test('duplicate prompt flow: shows existing suggestion and can create anyway', async ({ page, request }) => {
   // ensure a fresh test RSVP exists via API
   const ts = Date.now();
-  const primary = { firstName: 'Test', lastName: `Dup${ts}`, email: `dup+${ts}@example.com`, attending: true, party: [{ firstName: 'Guest', lastName: `Dup${ts}`, attending: true }] };
-  const deviceId = `playwright-dup-${ts}`;
+  const rnd = Math.random().toString(36).slice(2,8);
+  const primary = { firstName: 'Test', lastName: `Dup${ts}-${rnd}`, email: `dup+${ts}-${rnd}@example.com`, attending: true, party: [{ firstName: 'Guest', lastName: `Dup${ts}-${rnd}`, attending: true }] };
+  const deviceId = `playwright-dup-${ts}-${rnd}`;
   const createRes = await request.post(`${base}/api/rsvp`, { data: primary, headers: { 'x-device-id': deviceId } });
   if (!createRes.ok()) { const txt = await createRes.text(); console.error('Create RSVP failed:', createRes.status(), txt); }
   expect(createRes.ok()).toBeTruthy();

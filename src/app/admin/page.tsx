@@ -2,13 +2,17 @@
 import { useState } from "react";
 import AuditLogsViewer from '../../components/AuditLogsViewer';
 import AddGuestModal from '../../components/AddGuestModal';
+import Toast from '../../components/Toast';
+import { ToastProvider, useToast } from '../../components/toast/ToastContext';
 
-export default function AdminPage() {
+function InnerAdminPage() {
   const [password, setPassword] = useState("");
   const [authorized, setAuthorized] = useState(false);
   const [rsvps, setRsvps] = useState<any[]>([]);
   const [showAudit, setShowAudit] = useState(false);
   const [showAddGuest, setShowAddGuest] = useState<{ open: boolean; rsvpId?: string | number } | null>(null);
+  const { addToast } = useToast();
+
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -191,10 +195,14 @@ export default function AdminPage() {
                   const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: showAddGuest.rsvpId, action: 'add', firstName: p.firstName, lastName: p.lastName, attending: p.attending }) });
                   const d = await res.json(); if (!res.ok) return alert(d.error || 'Failed to add guest');
                   setRsvps(rsvps.map(x => x.id === d.rsvp.id ? d.rsvp : x));
+                  // show success toast
+                  addToast({ message: 'Guest added', variant: 'success' });
                 } catch (e) { alert('Failed to add guest'); }
               }}
             />
           )}
+          {showAudit && authorized && <AuditLogsViewer password={password} onClose={() => setShowAudit(false)} />}
+
           {showAudit && authorized && <AuditLogsViewer password={password} onClose={() => setShowAudit(false)} />}
           <ul className="mt-2 space-y-2">
             {rsvps
@@ -296,5 +304,13 @@ export default function AdminPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <ToastProvider>
+      <InnerAdminPage />
+    </ToastProvider>
   );
 }

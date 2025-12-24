@@ -46,21 +46,12 @@ export async function POST(req: Request) {
       if (!first) return NextResponse.json({ error: 'firstName required' }, { status: 400 });
       if (!last) return NextResponse.json({ error: 'lastName required' }, { status: 400 });
       if (first.length > 64 || last.length > 64) return NextResponse.json({ error: 'name too long' }, { status: 400 });
+
       const before = { party: JSON.parse(JSON.stringify(party)) };
       party[idx] = { ...party[idx], firstName: first, lastName: last, attending: body.attending !== undefined ? !!body.attending : party[idx].attending };
       const { error: upErr } = await supabaseServer.from('rsvps').update({ party, updated_at: new Date().toISOString() }).eq('id', rsvpId);
       if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
-      const { data: updated } = await supabaseServer.from('rsvps').select('*').eq('id', rsvpId).limit(1);
-      const adminEmail = process.env.ADMIN_EMAIL || 'admin';
-      const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
-      const deviceId = req.headers.get('x-device-id') || null;
-      await logAdminAction({ adminEmail, action: 'update-guest', targetTable: 'rsvps', targetId: String(rsvpId), before, after: updated?.[0], ip, deviceId });
-      const idx = Number.isFinite(Number(body.index)) ? Number(body.index) : null;
-      if (idx === null || idx < 0 || idx >= party.length) return NextResponse.json({ error: 'invalid index' }, { status: 400 });
-      const before = { party: JSON.parse(JSON.stringify(party)) };
-      party[idx] = { ...party[idx], firstName: String(body.firstName || party[idx].firstName || '').trim(), lastName: String(body.lastName || party[idx].lastName || '').trim(), attending: body.attending !== undefined ? !!body.attending : party[idx].attending };
-      const { error: upErr } = await supabaseServer.from('rsvps').update({ party, updated_at: new Date().toISOString() }).eq('id', rsvpId);
-      if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
+
       const { data: updated } = await supabaseServer.from('rsvps').select('*').eq('id', rsvpId).limit(1);
       const adminEmail = process.env.ADMIN_EMAIL || 'admin';
       const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null;
