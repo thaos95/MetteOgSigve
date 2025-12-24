@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { ToastProvider, useToast } from '../ToastContext';
 
 function VariantHarness() {
@@ -14,14 +14,18 @@ describe('Toast variants', () => {
   test('renders success and error variant classes', async () => {
     render(<ToastProvider><VariantHarness /></ToastProvider>);
 
-    (await screen.findByRole('button', { name: /success/i })).click();
+    await act(async () => {
+      (await screen.findByRole('button', { name: /success/i })).click();
+    });
     expect(await screen.findByText('ok')).toBeInTheDocument();
     const successToast = screen.getByText('ok').closest('[data-toast-id]');
-    expect(successToast).toHaveClass('bg-emerald-600');
+    expect(successToast).toHaveClass('bg-[#5c7c5f]');
 
-    (await screen.findByRole('button', { name: /error/i })).click();
+    await act(async () => {
+      (await screen.findByRole('button', { name: /error/i })).click();
+    });
     expect(await screen.findByText('err')).toBeInTheDocument();
     const errorToast = screen.getByText('err').closest('[data-toast-id]');
-    expect(errorToast).toHaveClass('bg-red-600');
+    expect(errorToast).toHaveClass('bg-[#a85454]');
   });
 });

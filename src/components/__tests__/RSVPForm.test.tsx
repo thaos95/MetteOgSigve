@@ -25,9 +25,9 @@ describe('RSVPForm', () => {
 
     // add a party member
     await user.click(screen.getByRole('button', { name: /add guest/i }));
-    // fill guest inputs
-    const firstGuest = screen.getAllByPlaceholderText(/First/i)[0];
-    const lastGuest = screen.getAllByPlaceholderText(/Last/i)[0];
+    // fill guest inputs - look for the sr-only labeled inputs for Guest 1
+    const firstGuest = screen.getByLabelText(/Guest 1 first name/i);
+    const lastGuest = screen.getByLabelText(/Guest 1 last name/i);
     await user.type(firstGuest, 'GuestFirst');
     await user.type(lastGuest, 'GuestLast');
 
@@ -66,8 +66,8 @@ describe('RSVPForm', () => {
     // ensure they're unchecked
     for (const cb of guestCheckboxes) expect(cb).not.toBeChecked();
 
-    // click mark all attending
-    await user.click(screen.getByRole('button', { name: /mark all attending/i }));
+    // click mark all attending (button text changed to "All attending")
+    await user.click(screen.getByRole('button', { name: /all attending/i }));
 
     // now they should be checked (filter by label again)
     const postCheckboxes = screen.getAllByRole('checkbox').filter(cb => {
@@ -90,6 +90,10 @@ describe('RSVPForm', () => {
 
     await user.type(screen.getByLabelText(/first name/i), 'Jane');
     await user.type(screen.getByLabelText(/last name/i), 'Doe');
+    
+    // Expand the token management section (it's in a details element now)
+    await user.click(screen.getByText(/Need to edit or cancel/i));
+    
     await user.type(screen.getByPlaceholderText(/Paste token/i), 'token-abc');
 
     // click Use token to load RSVP
@@ -113,9 +117,14 @@ describe('RSVPForm', () => {
 
     render(<RSVPForm />);
 
-    // fill email and send-to
+    // fill email
     await user.type(screen.getByLabelText(/^Email$/i), 'alice@example.com');
-    await user.type(screen.getByPlaceholderText(/Send to email/i), 'alt@example.com');
+    
+    // Expand the token management section (it's in a details element now)
+    await user.click(screen.getByText(/Need to edit or cancel/i));
+    
+    // fill send-to email and check update checkbox
+    await user.type(screen.getByLabelText(/Send link to email/i), 'alt@example.com');
     await user.click(screen.getByLabelText(/Update RSVP email/i));
 
     await user.click(screen.getByRole('button', { name: /Request edit\/cancel link/i }));
@@ -134,6 +143,10 @@ describe('RSVPForm', () => {
     render(<RSVPForm />);
 
     await user.type(screen.getByLabelText(/^Email$/i), 'bob@example.com');
+    
+    // Expand the token management section (it's in a details element now)
+    await user.click(screen.getByText(/Need to edit or cancel/i));
+    
     await user.click(screen.getByRole('button', { name: /Generate test token \(dev\)/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());

@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 const base = process.env.BASE_URL || 'http://localhost:3000';
 
 test('admin can edit, remove, reorder, and add guests', async ({ page, request }) => {
+  // Reset rate limits before test
+  await request.post(`${base}/api/admin/reset-rate-limits`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', all: true } });
+
   const ts = Date.now();
   const rnd = Math.random().toString(36).slice(2,8);
   const deviceId = `playwright-admin-edit-${ts}-${rnd}`;
@@ -17,9 +20,12 @@ test('admin can edit, remove, reorder, and add guests', async ({ page, request }
   await page.getByRole('button', { name: 'Login' }).click();
   await expect(page.getByRole('heading', { name: 'RSVPs' })).toBeVisible();
 
-  // find created rsvp row
-  await page.fill('input[placeholder="Filter by member name"]', 'A One');
-  await page.click('button:has-text("Export CSV")'); // quick way to ensure filter is applied; not necessary
+  // Open filters section and find created rsvp row
+  await page.locator('details:has-text("Filters")').click();
+  await page.fill('input[placeholder="Filter by name"]', 'A One');
+  // Open export section to trigger a click that helps filter apply
+  await page.locator('details:has-text("Export")').click();
+  await page.click('button:has-text("Export CSV")');
 
   const email = `edittest+${ts}-${rnd}@example.com`;
   const row = page.locator(`li:has-text("${email}")`).first();

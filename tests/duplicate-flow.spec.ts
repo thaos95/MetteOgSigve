@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 const base = process.env.BASE_URL || 'http://localhost:3000';
 
 test('duplicate prompt flow: shows existing suggestion and can create anyway', async ({ page, request }) => {
+  // Reset rate limits before test
+  await request.post(`${base}/api/admin/reset-rate-limits`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', all: true } });
+
   // ensure a fresh test RSVP exists via API
   const ts = Date.now();
   const rnd = Math.random().toString(36).slice(2,8);
@@ -19,10 +22,11 @@ test('duplicate prompt flow: shows existing suggestion and can create anyway', a
   await page.getByLabel('Email', { exact: true }).fill(`dup+${ts}+2@example.com`);
   await page.getByRole('button', { name: 'Send RSVP' }).click();
 
-  // Wait for the duplicate prompt UI
-  await expect(page.locator('text=We found an existing RSVP that may match')).toBeVisible();
+  // Wait for the duplicate prompt UI - updated to match new text
+  await expect(page.locator('text=Existing RSVP Found')).toBeVisible();
 
   // Click create new anyway and wait for confirmation
   await page.click('button:has-text("Create new anyway")');
-  await expect(page.locator('text=Thanks — your RSVP has been')).toBeVisible();
+  // Updated to match new success message
+  await expect(page.locator('text=Your RSVP has been')).toBeVisible();
 });

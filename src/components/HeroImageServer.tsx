@@ -11,11 +11,22 @@ export default async function HeroImageServer() {
   }
   const imageFiles = files.filter(f => /\.(jpe?g|png|gif)$/i.test(f));
   const first = imageFiles[0];
-  if (!first) return null;
+  
+  // Fallback gradient if no image
+  if (!first) {
+    return (
+      <div className="w-full h-[60vh] sm:h-[70vh] bg-gradient-to-br from-primary/20 to-accent/20" />
+    );
+  }
 
   return (
-    <div className="mt-6 rounded overflow-hidden shadow">
-      <img src={`/${encodeURIComponent('Mette og Sigve')}/${encodeURIComponent(first)}`} alt="Hero" className="w-full h-60 object-cover" />
+    <div className="relative w-full h-[60vh] sm:h-[70vh] overflow-hidden">
+      <img 
+        src={`/${encodeURIComponent('Mette og Sigve')}/${encodeURIComponent(first)}`} 
+        alt="Mette and Sigve" 
+        className="w-full h-full object-cover"
+        loading="eager"
+      />
     </div>
   );
 }

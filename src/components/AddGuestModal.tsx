@@ -83,30 +83,30 @@ export default function AddGuestModal({
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="add-guest-title" ref={rootRef} className="fixed inset-0 z-50 flex items-center justify-center p-4" data-open>
-      <div className="absolute inset-0 bg-black opacity-40" onClick={() => { onClose(); restoreFocus(); }} />
-      <div className="relative bg-white rounded shadow max-w-md w-full p-4 transition-transform transform scale-100" data-open>
-        <h3 id="add-guest-title" className="text-lg font-medium">Add guest</h3>
-        <div className="mt-3 space-y-3">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { onClose(); restoreFocus(); }} />
+      <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6 transition-transform transform scale-100" data-open>
+        <h3 id="add-guest-title" className="font-serif text-2xl text-primary mb-4">Add guest</h3>
+        <div className="space-y-4">
           <div>
-            <label htmlFor="first-name" className="block text-sm">First name</label>
-            <input id="first-name" ref={firstRef} value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1 w-full p-2 border rounded" aria-invalid={!!error && !firstName.trim()} />
+            <label htmlFor="first-name" className="block text-sm font-medium text-primary mb-2">First name</label>
+            <input id="first-name" ref={firstRef} value={firstName} onChange={e => setFirstName(e.target.value)} className="input" aria-invalid={!!error && !firstName.trim()} placeholder="Guest's first name" />
           </div>
           <div>
-            <label htmlFor="last-name" className="block text-sm">Last name</label>
-            <input id="last-name" value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1 w-full p-2 border rounded" aria-invalid={!!error && !lastName.trim()} />
+            <label htmlFor="last-name" className="block text-sm font-medium text-primary mb-2">Last name</label>
+            <input id="last-name" value={lastName} onChange={e => setLastName(e.target.value)} className="input" aria-invalid={!!error && !lastName.trim()} placeholder="Guest's last name" />
           </div>
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={attending} onChange={e => setAttending(e.target.checked)} />
-              <span className="text-sm">Attending</span>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={attending} onChange={e => setAttending(e.target.checked)} className="w-4 h-4 accent-primary" />
+              <span className="text-warm-gray">Attending</span>
             </label>
           </div>
-          {error && <div className="text-sm text-red-600">{error}</div>}
+          {error && <div className="text-sm text-error bg-error/5 px-3 py-2 rounded-md">{error}</div>}
         </div>
 
-        <div className="mt-4 flex justify-end gap-2">
-          <button onClick={() => { onClose(); restoreFocus(); }} className="px-3 py-1 bg-gray-200 rounded">Cancel</button>
-          <button onClick={handleSave} disabled={saving} className="px-3 py-1 bg-blue-600 text-white rounded">{saving ? 'Saving...' : 'Save'}</button>
+        <div className="mt-6 flex justify-end gap-3">
+          <button onClick={() => { onClose(); restoreFocus(); }} className="btn-secondary">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="btn-primary">{saving ? 'Saving...' : 'Save guest'}</button>
         </div>
       </div>
     </div>

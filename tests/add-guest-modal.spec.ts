@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 const base = process.env.BASE_URL || 'http://localhost:3000';
 
 test('admin add guest via modal works and validates', async ({ page, request }) => {
+  // Reset rate limits before test
+  await request.post(`${base}/api/admin/reset-rate-limits`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', all: true } });
+
   const ts = Date.now();
   const deviceId = `playwright-modal-${ts}`;
   const email = `modal+${ts}@example.com`;
@@ -23,8 +26,9 @@ test('admin add guest via modal works and validates', async ({ page, request }) 
   await page.getByRole('button', { name: 'Login' }).click();
   await expect(page.getByRole('heading', { name: 'RSVPs' })).toBeVisible();
 
-  // filter to find our row (filter by email to ensure uniqueness)
-  await page.fill('input[placeholder="Filter by member name"]', 'ModalTest');
+  // Open the filters section and filter to find our row
+  await page.locator('details:has-text("Filters")').click();
+  await page.fill('input[placeholder="Filter by name"]', 'ModalTest');
 
   const row = page.locator(`li:has-text("${email}")`).first();
   await expect(row).toBeVisible();

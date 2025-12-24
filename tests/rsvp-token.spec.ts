@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 const base = process.env.BASE_URL || 'http://localhost:3000';
 
 test('token paste/use flow: generate token, apply it, and update RSVP', async ({ page, request }) => {
+  // Reset rate limits before test
+  await request.post(`${base}/api/admin/reset-rate-limits`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', all: true } });
+
   const ts = Date.now();
   const deviceId = `playwright-token-${ts}`;
   const email = `token+${ts}@example.com`;
@@ -24,8 +27,9 @@ test('token paste/use flow: generate token, apply it, and update RSVP', async ({
   expect(genJson.token).toBeTruthy();
   const token = genJson.token;
 
-  // Visit RSVP page and paste token, then use it
+  // Visit RSVP page and expand token management section
   await page.goto(`${base}/rsvp`);
+  await page.click('text=Need to edit or cancel an existing RSVP?');
   await page.fill('input[placeholder="Paste token here"]', token);
   await page.click('button:has-text("Use token")');
 
@@ -57,6 +61,9 @@ test('token paste/use flow: generate token, apply it, and update RSVP', async ({
 });
 
 test('request-token to alternate email with updateEmail updates RSVP and returns token', async ({ request }) => {
+  // Reset rate limits before test
+  await request.post(`${base}/api/admin/reset-rate-limits`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', all: true } });
+
   const ts = Date.now();
   const email = `change+${ts}@example.com`;
   const alt = `alt+${ts}@example.com`;

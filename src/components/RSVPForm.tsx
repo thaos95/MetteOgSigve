@@ -158,153 +158,261 @@ export default function RSVPForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4 max-w-lg">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="first-name" className="block text-sm">First name</label>
-          <input id="first-name" value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
-        </div>
-        <div>
-          <label htmlFor="last-name" className="block text-sm">Last name</label>
-          <input id="last-name" value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1 w-full p-2 border rounded" required />
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <label htmlFor="email" className="block text-sm">Email</label>
-        <input id="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full p-2 border rounded" type="email" />
-      </div>
-
-      <div className="flex items-center gap-4 mt-4">
-        <label className="flex items-center gap-2">
-          <input type="radio" checked={attending} onChange={() => setAttending(true)} /> Attending
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="radio" checked={!attending} onChange={() => setAttending(false)} /> Not attending
-        </label>
-      </div>
-
-      <div className="mt-4">
-        <label className="block text-sm">Guest list</label>
-        <div className="mt-2 space-y-2">
-          {party.map((p, i) => (
-            <div key={i} className="flex gap-2 items-center">
-              <input className="p-2 border rounded w-1/3" value={p.firstName} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, firstName: e.target.value } : pp))} placeholder="First" />
-              <input className="p-2 border rounded w-1/3" value={p.lastName} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, lastName: e.target.value } : pp))} placeholder="Last" />
-              <label className="flex items-center gap-1">
-                <input type="checkbox" checked={!!p.attending} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, attending: e.target.checked } : pp))} /> Attending
-              </label>
-              <button type="button" onClick={() => setParty(party.filter((_, idx) => idx !== i))} className="px-2 py-1 bg-red-600 text-white rounded">Remove</button>
-            </div>
-          ))}
-          <div>
-            <button type="button" onClick={() => setParty([...party, { firstName: '', lastName: '', attending: true }])} className="px-3 py-1 bg-gray-200 rounded">Add guest</button>
-            <button type="button" onClick={() => setParty(party.map(p => ({ ...p, attending: true })))} className="ml-2 px-3 py-1 bg-gray-200 rounded">Mark all attending</button>
-            <button type="button" onClick={() => setParty(party.map(p => ({ ...p, attending: false })))} className="ml-2 px-3 py-1 bg-gray-200 rounded">Mark all not attending</button>
+    <form onSubmit={submit} className="space-y-6">
+      {/* Success State */}
+      {status === "done" && (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-success/10 flex items-center justify-center">
+            <svg className="w-8 h-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
+          <h3 className="font-serif text-2xl text-primary mb-2">Thank you!</h3>
+          <p className="text-warm-gray">
+            Your RSVP has been {editId ? 'updated' : 'submitted'} successfully.
+          </p>
+          <p className="text-sm text-warm-gray mt-4">
+            We can't wait to celebrate with you.
+          </p>
         </div>
-      </div>
+      )}
 
-      <div>
-        <label className="block text-sm">Notes</label>
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} className="mt-1 w-full p-2 border rounded" rows={4} />
-      </div>
-
-      <div>
-        <button type="submit" className="px-4 py-2 bg-black text-white rounded" disabled={status === "sending"}>{editId ? 'Update RSVP' : 'Send RSVP'}</button>
-        {status === "done" && <p className="mt-2 text-sm text-green-600">Thanks — your RSVP has been {editId ? 'updated' : 'submitted'}.</p>}
-        {status === "error" && <p className="mt-2 text-sm text-red-600">There was an error — try again later.</p>}
-      </div>
-
-      {showExisting && (
-        <div className="mt-4 p-3 border rounded bg-yellow-50">
-          <div className="text-sm">We found an existing RSVP that may match:</div>
-          <div className="mt-2">
-            <strong>{showExisting.name ?? `${showExisting.first_name} ${showExisting.last_name}`}</strong> — {showExisting.email}
-            <div className="mt-2 text-sm">Party:</div>
-            <ul className="ml-4 list-disc text-sm">
-              <li>{showExisting.first_name} {showExisting.last_name} — {showExisting.attending ? 'Attending' : 'Not attending'}</li>
-              {(showExisting.party && Array.isArray(showExisting.party) ? showExisting.party : []).map((p: any, i: number) => (
-                <li key={i}>{p.firstName} {p.lastName} — {p.attending ? 'Attending' : 'Not attending'}</li>
-              ))}
-            </ul>
-            <div className="mt-2 flex gap-2">
-              <button type="button" onClick={() => startEditFromExisting(showExisting)} className="px-3 py-1 bg-green-600 text-white rounded">Edit this RSVP</button>
-              <button type="button" onClick={() => cancelExisting(showExisting.id)} className="px-3 py-1 bg-red-600 text-white rounded">Cancel RSVP</button>
-              <button type="button" onClick={async () => {
-                // create new anyway by resubmitting with overrideDuplicate
-                try {
-                  const payload: any = { firstName, lastName, email, attending, party, notes, overrideDuplicate: true };
-                  const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
-                  const headers: any = { 'Content-Type': 'application/json' };
-                  if (deviceId) headers['x-device-id'] = deviceId;
-                  const res = await fetch('/api/rsvp', { method: 'POST', headers, body: JSON.stringify(payload) });
-                  if (res.ok) {
-                    setStatus('done');
-                    setShowExisting(null);
-                  } else {
-                    const d = await res.json(); alert(d.error || 'Failed');
-                  }
-                } catch (e) { alert('Failed'); }
-              }} className="px-3 py-1 bg-blue-600 text-white rounded">Create new anyway</button>
+      {/* Error State */}
+      {status === "error" && (
+        <div className="bg-error/5 border border-error/20 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-error">Something went wrong</p>
+              <p className="text-sm text-warm-gray">Please try again later or contact us directly.</p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="mt-4 text-sm text-gray-600">
-        <div>If you want to receive a secure edit/cancel link by email, enter your <strong>email</strong> and click the button below. You can optionally specify a different address to send the link to and update the RSVP's email on record.</div>
-        <div className="mt-2 space-y-2">
-          <div className="flex gap-2">
-            <input placeholder="Send to email (optional)" value={sendToEmail} onChange={e => setSendToEmail(e.target.value)} className="p-2 border rounded w-1/2" type="email" />
-            <label className="flex items-center gap-2"><input type="checkbox" checked={updateEmail} onChange={e => setUpdateEmail(e.target.checked)} /> Update RSVP email</label>
+      {status !== "done" && (
+        <>
+          {/* Name Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="first-name" className="block text-sm font-medium text-primary mb-2">First name</label>
+              <input id="first-name" value={firstName} onChange={e => setFirstName(e.target.value)} className="input" required placeholder="Your first name" />
+            </div>
+            <div>
+              <label htmlFor="last-name" className="block text-sm font-medium text-primary mb-2">Last name</label>
+              <input id="last-name" value={lastName} onChange={e => setLastName(e.target.value)} className="input" required placeholder="Your last name" />
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={async () => {
-              if (!email && !sendToEmail) { alert('Please enter your email first or specify an email to send to'); return; }
-              const recaptchaToken = await getRecaptchaToken('request-token');
-              const body = { email, purpose: 'edit' } as any;
-              if (recaptchaToken) body.recaptchaToken = recaptchaToken;
-              if (sendToEmail) body.sendToEmail = sendToEmail;
-              if (updateEmail) body.updateEmail = true;
-              const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
-              const headers: any = { 'Content-Type': 'application/json' };
-              if (deviceId) headers['x-device-id'] = deviceId;
-              const res = await fetch('/api/rsvp/request-token', { method: 'POST', headers, body: JSON.stringify(body) });
-              const d = await res.json().catch(() => ({}));
-              if (res.ok) {
-                if (d?.devToken) {
-                  // show dev token for convenience
-                  alert('Development token: ' + d.devToken);
-                  setPastedToken(d.devToken);
-                } else {
-                  alert('A secure link was sent to the target email (if it exists in our records).');
-                }
-              } else { alert(d.error ?? 'Failed'); }
-            }} className="px-3 py-2 bg-indigo-600 text-white rounded">Request edit/cancel link</button>
 
-            {process.env.NODE_ENV !== 'production' && (
-              <button onClick={async () => {
-                // dev helper: generate test token and pre-fill
+          {/* Email Field */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-primary mb-2">Email</label>
+            <input id="email" value={email} onChange={e => setEmail(e.target.value)} className="input" type="email" placeholder="your@email.com" />
+          </div>
+
+          {/* Attending Radio Group */}
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium text-primary">Will you be attending?</legend>
+            <div className="flex items-center gap-6">
+              <label htmlFor="attending-yes" className="flex items-center gap-2 cursor-pointer group">
+                <input id="attending-yes" type="radio" name="attending" checked={attending} onChange={() => setAttending(true)} className="w-4 h-4 text-primary accent-primary" />
+                <span className="text-warm-gray group-hover:text-primary transition-colors">Joyfully attending</span>
+              </label>
+              <label htmlFor="attending-no" className="flex items-center gap-2 cursor-pointer group">
+                <input id="attending-no" type="radio" name="attending" checked={!attending} onChange={() => setAttending(false)} className="w-4 h-4 text-primary accent-primary" />
+                <span className="text-warm-gray group-hover:text-primary transition-colors">Regretfully declining</span>
+              </label>
+            </div>
+          </fieldset>
+
+          {/* Additional Guests */}
+          <fieldset className="space-y-4">
+            <legend className="text-sm font-medium text-primary">Additional guests in your party</legend>
+            <div className="space-y-3">
+              {party.map((p, i) => (
+                <div key={i} className="p-4 bg-cream/50 border border-soft-border rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-warm-gray">Guest {i + 1}</span>
+                    <button type="button" aria-label={`Remove guest ${i + 1}`} onClick={() => setParty(party.filter((_, idx) => idx !== i))} className="btn-danger text-sm px-3 py-1">Remove</button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="sr-only" htmlFor={`guest-${i}-first`}>Guest {i + 1} first name</label>
+                      <input id={`guest-${i}-first`} className="input" value={p.firstName} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, firstName: e.target.value } : pp))} placeholder="First name" />
+                    </div>
+                    <div>
+                      <label className="sr-only" htmlFor={`guest-${i}-last`}>Guest {i + 1} last name</label>
+                      <input id={`guest-${i}-last`} className="input" value={p.lastName} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, lastName: e.target.value } : pp))} placeholder="Last name" />
+                    </div>
+                  </div>
+                  <label htmlFor={`guest-${i}-attending`} className="flex items-center gap-2 cursor-pointer">
+                    <input id={`guest-${i}-attending`} type="checkbox" checked={!!p.attending} onChange={e => setParty(party.map((pp, idx) => idx === i ? { ...pp, attending: e.target.checked } : pp))} className="w-4 h-4 accent-primary" />
+                    <span className="text-sm text-warm-gray">Attending</span>
+                  </label>
+                </div>
+              ))}
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setParty([...party, { firstName: '', lastName: '', attending: true }])} className="btn-secondary text-sm">+ Add guest</button>
+                {party.length > 0 && (
+                  <>
+                    <button type="button" onClick={() => setParty(party.map(p => ({ ...p, attending: true })))} className="btn-secondary text-sm">All attending</button>
+                    <button type="button" onClick={() => setParty(party.map(p => ({ ...p, attending: false })))} className="btn-secondary text-sm">All not attending</button>
+                  </>
+                )}
+              </div>
+            </div>
+          </fieldset>
+
+          {/* Notes */}
+          <div>
+            <label htmlFor="notes" className="block text-sm font-medium text-primary mb-2">Notes <span className="font-normal text-warm-gray">(dietary requirements, song requests, etc.)</span></label>
+            <textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} className="input min-h-[100px] resize-y" rows={4} placeholder="Let us know if there's anything we should know..." />
+          </div>
+
+          {/* Submit Button */}
+          <div className="pt-4">
+            <button type="submit" className="btn-primary w-full text-lg py-4" disabled={status === "sending"}>
+              {status === "sending" ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Sending...
+                </span>
+              ) : (editId ? 'Update RSVP' : 'Send RSVP')}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Existing RSVP Found Modal */}
+      {showExisting && (
+        <div className="mt-6 p-5 border-2 border-accent/30 rounded-xl bg-accent/5">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-serif text-lg text-primary mb-1">Existing RSVP Found</h4>
+              <p className="text-sm text-warm-gray mb-3">We found an RSVP that might be yours:</p>
+              <div className="bg-white/60 rounded-lg p-3 mb-4">
+                <p className="font-medium text-primary">{showExisting.name ?? `${showExisting.first_name} ${showExisting.last_name}`}</p>
+                <p className="text-sm text-warm-gray">{showExisting.email}</p>
+                <div className="mt-2 text-sm">
+                  <span className="text-warm-gray">Party:</span>
+                  <ul className="ml-4 mt-1 space-y-0.5">
+                    <li className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${showExisting.attending ? 'bg-success' : 'bg-error'}`}></span>
+                      {showExisting.first_name} {showExisting.last_name}
+                    </li>
+                    {(showExisting.party && Array.isArray(showExisting.party) ? showExisting.party : []).map((p: any, i: number) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${p.attending ? 'bg-success' : 'bg-error'}`}></span>
+                        {p.firstName} {p.lastName}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => startEditFromExisting(showExisting)} className="btn-primary text-sm">Edit this RSVP</button>
+                <button type="button" onClick={() => cancelExisting(showExisting.id)} className="btn-danger text-sm">Cancel RSVP</button>
+                <button type="button" onClick={async () => {
+                  try {
+                    const payload: any = { firstName, lastName, email, attending, party, notes, overrideDuplicate: true };
+                    const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
+                    const headers: any = { 'Content-Type': 'application/json' };
+                    if (deviceId) headers['x-device-id'] = deviceId;
+                    const res = await fetch('/api/rsvp', { method: 'POST', headers, body: JSON.stringify(payload) });
+                    if (res.ok) {
+                      setStatus('done');
+                      setShowExisting(null);
+                    } else {
+                      const d = await res.json(); alert(d.error || 'Failed');
+                    }
+                  } catch (e) { alert('Failed'); }
+                }} className="btn-secondary text-sm">Create new anyway</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Token Management Section */}
+      <details className="mt-8 group">
+        <summary className="text-sm text-warm-gray cursor-pointer hover:text-primary transition-colors list-none flex items-center gap-2">
+          <svg className="w-4 h-4 transform group-open:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          Need to edit or cancel an existing RSVP?
+        </summary>
+        <div className="mt-4 p-4 bg-cream/30 border border-soft-border rounded-lg space-y-4">
+          <p className="text-sm text-warm-gray">
+            Enter your email to receive a secure edit/cancel link. You can optionally specify a different address to send the link to.
+          </p>
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2 items-end">
+              <div className="flex-1 min-w-[200px]">
+                <label htmlFor="send-to-email" className="block text-sm font-medium text-primary mb-1">Send link to email</label>
+                <input id="send-to-email" placeholder="email@example.com" value={sendToEmail} onChange={e => setSendToEmail(e.target.value)} className="input" type="email" />
+              </div>
+              <label htmlFor="update-email-checkbox" className="flex items-center gap-2 cursor-pointer pb-2">
+                <input id="update-email-checkbox" type="checkbox" checked={updateEmail} onChange={e => setUpdateEmail(e.target.checked)} className="w-4 h-4 accent-primary" />
+                <span className="text-sm text-warm-gray">Update RSVP email</span>
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={async () => {
+                if (!email && !sendToEmail) { alert('Please enter your email first or specify an email to send to'); return; }
+                const recaptchaToken = await getRecaptchaToken('request-token');
+                const body = { email, purpose: 'edit' } as any;
+                if (recaptchaToken) body.recaptchaToken = recaptchaToken;
+                if (sendToEmail) body.sendToEmail = sendToEmail;
+                if (updateEmail) body.updateEmail = true;
                 const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
                 const headers: any = { 'Content-Type': 'application/json' };
                 if (deviceId) headers['x-device-id'] = deviceId;
-                const res = await fetch('/api/rsvp/generate-test-token', { method: 'POST', headers, body: JSON.stringify({ email }) });
-                const d = await res.json();
-                if (res.ok && d?.token) {
-                  alert('Generated test token: ' + d.token);
-                  setPastedToken(d.token);
-                } else {
-                  alert(d.error ?? 'Failed to generate test token');
-                }
-              }} className="px-3 py-2 bg-yellow-600 text-black rounded">Generate test token (dev)</button>
-            )}
+                const res = await fetch('/api/rsvp/request-token', { method: 'POST', headers, body: JSON.stringify(body) });
+                const d = await res.json().catch(() => ({}));
+                if (res.ok) {
+                  if (d?.devToken) {
+                    alert('Development token: ' + d.devToken);
+                    setPastedToken(d.devToken);
+                  } else {
+                    alert('A secure link was sent to the target email (if it exists in our records).');
+                  }
+                } else { alert(d.error ?? 'Failed'); }
+              }} className="btn-primary text-sm">Request edit/cancel link</button>
+
+              {process.env.NODE_ENV !== 'production' && (
+                <button type="button" onClick={async () => {
+                  const deviceId = (() => { try { return localStorage.getItem('__device_id'); } catch (e) { return null; } })();
+                  const headers: any = { 'Content-Type': 'application/json' };
+                  if (deviceId) headers['x-device-id'] = deviceId;
+                  const res = await fetch('/api/rsvp/generate-test-token', { method: 'POST', headers, body: JSON.stringify({ email }) });
+                  const d = await res.json();
+                  if (res.ok && d?.token) {
+                    alert('Generated test token: ' + d.token);
+                    setPastedToken(d.token);
+                  } else {
+                    alert(d.error ?? 'Failed to generate test token');
+                  }
+                }} className="btn-secondary text-sm">Generate test token (dev)</button>
+              )}
+            </div>
           </div>
 
-          <div className="mt-2">
-            <label className="block text-sm">Paste token (if you received one)</label>
-            <div className="flex gap-2 mt-1">
-              <input value={pastedToken} onChange={e => setPastedToken(e.target.value)} placeholder="Paste token here" className="w-full p-2 border rounded" />
+          <div className="pt-3 border-t border-soft-border">
+            <label htmlFor="paste-token" className="block text-sm font-medium text-primary mb-1">Or paste your token directly</label>
+            <div className="flex flex-wrap gap-2">
+              <input id="paste-token" value={pastedToken} onChange={e => setPastedToken(e.target.value)} placeholder="Paste token here" className="input flex-1 min-w-[200px]" />
               <button type="button" onClick={async () => {
                 if (!pastedToken) { alert('Paste a token first'); return; }
                 try {
@@ -324,11 +432,11 @@ export default function RSVPForm() {
                     alert('Token applied — you can now update your RSVP');
                   }
                 } catch (e) { alert('Failed to verify token'); }
-              }} className="px-3 py-2 bg-gray-200 rounded">Use token</button>
+              }} className="btn-secondary text-sm">Use token</button>
             </div>
           </div>
         </div>
-      </div>
+      </details>
     </form>
   );
 }

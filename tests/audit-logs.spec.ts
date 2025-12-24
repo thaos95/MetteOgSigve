@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 const base = process.env.BASE_URL || 'http://localhost:3000';
 
 test('audit logs modal displays recent admin actions and detail view', async ({ page, request }) => {
+  // Reset rate limits before test
+  await request.post(`${base}/api/admin/reset-rate-limits`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', all: true } });
+
   const ts = Date.now();
   const rnd = Math.random().toString(36).slice(2,8);
   const deviceId = `playwright-audit-${ts}-${rnd}`;
@@ -42,7 +45,7 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
   await expect(page.getByRole('heading', { name: 'RSVPs' })).toBeVisible();
 
   // Open audit logs modal and wait for the logs fetch to complete
-  await page.getByRole('button', { name: 'Open audit logs' }).click();
+  await page.getByRole('button', { name: 'Audit logs' }).click();
   await page.waitForResponse(r => r.url().includes('/api/admin/audit-logs') && r.status() === 200);
   await expect(page.getByRole('heading', { name: 'Admin Audit Logs' }).first()).toBeVisible();
 
@@ -72,6 +75,6 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
   // use evaluate click to avoid pointer interception flakiness
   await row.locator('button:has-text("View")').evaluate((el: any) => el.click());
   await expect(page.locator('text=Audit detail')).toBeVisible();
-  // Inspect the 'After' pre block (second one) for the new guest
-  await expect(page.locator('pre').nth(1)).toContainText('NewG');
+  // Find any pre block that contains NewG (the after data)
+  await expect(page.locator('pre').filter({ hasText: 'NewG' }).first()).toBeVisible();
 });

@@ -15,17 +15,30 @@ export default async function GalleryServer({ limit = 12 }: Props) {
 
   const imageFiles = files.filter(f => /\.(jpe?g|png|gif)$/i.test(f)).slice(0, limit);
 
+  if (imageFiles.length === 0) {
+    return (
+      <div className="text-center py-12 text-warm-gray">
+        <p>No images found. Add photos to /public/Mette og Sigve to display the gallery.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 mt-4">
-      {imageFiles.length === 0 ? (
-        <div className="col-span-3 text-gray-500">No images found in /public/Mette og Sigve. Place images there to show the gallery.</div>
-      ) : (
-        imageFiles.map((file) => (
-          <div key={file} className="bg-gray-100 h-40 overflow-hidden rounded shadow-sm">
-            <img src={`/${encodeURIComponent('Mette og Sigve')}/${encodeURIComponent(file)}`} alt={file} className="w-full h-full object-cover" />
-          </div>
-        ))
-      )}
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+      {imageFiles.map((file, index) => (
+        <div 
+          key={file} 
+          className="group relative aspect-square overflow-hidden rounded-lg bg-soft-border shadow-sm hover:shadow-md transition-shadow duration-300"
+        >
+          <img 
+            src={`/${encodeURIComponent('Mette og Sigve')}/${encodeURIComponent(file)}`} 
+            alt={`Gallery photo ${index + 1}`} 
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+        </div>
+      ))}
     </div>
   );
 }

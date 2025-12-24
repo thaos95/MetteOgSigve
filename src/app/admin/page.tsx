@@ -108,46 +108,81 @@ function InnerAdminPage() {
           </div>
         </div>
       ) : (
-        <div className="mt-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium">RSVPs</h3>
-            <div className="flex items-center gap-2">
-              <select value={filterAttending} onChange={e => setFilterAttending(e.target.value as any)} className="p-2 border rounded">
-                <option value="all">All</option>
-                <option value="yes">Attending</option>
-                <option value="no">Not attending</option>
-              </select>
-              <input type="date" value={filterFrom} onChange={e => setFilterFrom(e.target.value)} className="p-2 border rounded" />
-              <input type="date" value={filterTo} onChange={e => setFilterTo(e.target.value)} className="p-2 border rounded" />
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={includeUnverified} onChange={e => setIncludeUnverified(e.target.checked)} />
-                <span className="text-sm">Include unverified</span>
-              </label>
+        <div className="mt-4 space-y-4">
+          {/* Header section */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-medium text-lg">RSVPs</h3>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setShowAudit(true)} className="px-3 py-2 bg-gray-700 text-white rounded text-sm">Audit logs</button>
+              <button onClick={() => fetchAuditLogsQuick()} className="px-3 py-2 bg-gray-600 text-white rounded text-sm">Quick preview</button>
+            </div>
+          </div>
 
-              <div className="flex items-center gap-2">
-                <input value={memberFilter} onChange={e => setMemberFilter(e.target.value)} placeholder="Filter by member name" className="p-2 border rounded" />
-                <select value={memberAttendingFilter} onChange={e => setMemberAttendingFilter(e.target.value as '' | 'yes' | 'no')} className="p-2 border rounded">
-                  <option value="">Member attending (any)</option>
-                  <option value="yes">Member attending</option>
-                  <option value="no">Member not attending</option>
+          {/* Filters section */}
+          <details className="border rounded p-3" open>
+            <summary className="cursor-pointer font-medium text-sm">Filters</summary>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div>
+                <label htmlFor="filter-attending" className="block text-xs text-gray-600 mb-1">Attending status</label>
+                <select id="filter-attending" value={filterAttending} onChange={e => setFilterAttending(e.target.value as any)} className="w-full p-2 border rounded text-sm">
+                  <option value="all">All</option>
+                  <option value="yes">Attending</option>
+                  <option value="no">Not attending</option>
                 </select>
               </div>
+              <div>
+                <label htmlFor="filter-from" className="block text-xs text-gray-600 mb-1">From date</label>
+                <input id="filter-from" type="date" value={filterFrom} onChange={e => setFilterFrom(e.target.value)} className="w-full p-2 border rounded text-sm" />
+              </div>
+              <div>
+                <label htmlFor="filter-to" className="block text-xs text-gray-600 mb-1">To date</label>
+                <input id="filter-to" type="date" value={filterTo} onChange={e => setFilterTo(e.target.value)} className="w-full p-2 border rounded text-sm" />
+              </div>
+              <div className="flex items-end">
+                <label htmlFor="include-unverified" className="flex items-center gap-2">
+                  <input id="include-unverified" type="checkbox" checked={includeUnverified} onChange={e => setIncludeUnverified(e.target.checked)} />
+                  <span className="text-sm">Include unverified</span>
+                </label>
+              </div>
+              <div>
+                <label htmlFor="member-filter" className="block text-xs text-gray-600 mb-1">Member name</label>
+                <input id="member-filter" value={memberFilter} onChange={e => setMemberFilter(e.target.value)} placeholder="Filter by name" className="w-full p-2 border rounded text-sm" />
+              </div>
+              <div>
+                <label htmlFor="member-attending-filter" className="block text-xs text-gray-600 mb-1">Member attending</label>
+                <select id="member-attending-filter" value={memberAttendingFilter} onChange={e => setMemberAttendingFilter(e.target.value as '' | 'yes' | 'no')} className="w-full p-2 border rounded text-sm">
+                  <option value="">Any</option>
+                  <option value="yes">Attending</option>
+                  <option value="no">Not attending</option>
+                </select>
+              </div>
+            </div>
+          </details>
 
-              <button onClick={exportCSV} className="px-3 py-2 bg-blue-600 text-white rounded">Export CSV</button>
-              <button onClick={() => emailBackup()} className="ml-2 px-3 py-2 bg-emerald-600 text-white rounded">Send backup (email)</button>
-              {/* Test send email */}
-              <div className="ml-2 flex items-center gap-2">
-                <input value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="recipient (optional)" className="p-2 border rounded" />
+          {/* Export & backup section */}
+          <details className="border rounded p-3">
+            <summary className="cursor-pointer font-medium text-sm">Export & backup</summary>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button onClick={exportCSV} className="px-3 py-2 bg-blue-600 text-white rounded text-sm">Export CSV</button>
+              <button onClick={() => emailBackup()} className="px-3 py-2 bg-emerald-600 text-white rounded text-sm">Email backup</button>
+              <div className="flex flex-wrap gap-2 items-center">
+                <label htmlFor="test-email-input" className="sr-only">Test email recipient</label>
+                <input id="test-email-input" value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="recipient (optional)" className="p-2 border rounded text-sm" />
                 <button onClick={async () => {
                   const to = testEmail || undefined;
                   const res = await fetch('/api/admin/test-send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, to }) });
                   const data = await res.json().catch(()=>({}));
                   if (!res.ok) alert(data.error || 'Test send failed'); else alert('Test send queued');
-                }} className="px-3 py-2 bg-indigo-600 text-white rounded">Send test email</button>
+                }} className="px-3 py-2 bg-indigo-600 text-white rounded text-sm">Send test email</button>
               </div>
+            </div>
+          </details>
 
-              {/* Clear RSVPs (dangerous) */}
-              <div className="ml-2">
+          {/* Danger zone section */}
+          <details className="border border-red-200 rounded p-3 bg-red-50">
+            <summary className="cursor-pointer font-medium text-sm text-red-700">Danger zone</summary>
+            <div className="mt-3 space-y-3">
+              <div className="flex flex-wrap gap-2 items-center">
                 <button onClick={async () => {
                   if (!confirm('This will permanently DELETE all RSVPs. Type DELETE to confirm in the next prompt. Continue?')) return;
                   const answer = prompt('Type DELETE to confirm');
@@ -155,12 +190,12 @@ function InnerAdminPage() {
                   const res = await fetch('/api/admin/clear-rsvps', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, confirm: 'DELETE' }) });
                   const data = await res.json().catch(()=>({}));
                   if (!res.ok) alert(data.error || 'Clear failed'); else { alert(`Deleted ${data.deleted ?? 0} RSVPs`); setRsvps([]); }
-                }} className="ml-2 px-3 py-2 bg-red-700 text-white rounded">Clear all RSVPs</button>
+                }} className="px-3 py-2 bg-red-700 text-white rounded text-sm">Clear all RSVPs</button>
+                <button onClick={removeSentinel} className="px-3 py-2 bg-red-600 text-white rounded text-sm">Remove sentinel</button>
               </div>
-
-              {/* Reset rate limits */}
-              <div className="ml-2 flex items-center gap-2">
-                <input placeholder="email (leave blank to clear all)" className="p-2 border rounded" id="rlEmailInput" />
+              <div className="flex flex-wrap gap-2 items-center">
+                <label htmlFor="rlEmailInput" className="sr-only">Email for rate limit operations</label>
+                <input id="rlEmailInput" placeholder="email (blank = all)" className="p-2 border rounded text-sm" />
                 <button onClick={async () => {
                   const emailInput = (document.getElementById('rlEmailInput') as HTMLInputElement | null)?.value?.trim();
                   if (!emailInput && !confirm('No email provided — clear ALL rate limits?')) return;
@@ -168,21 +203,17 @@ function InnerAdminPage() {
                   const res = await fetch('/api/admin/reset-rate-limits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                   const data = await res.json().catch(()=>({}));
                   if (!res.ok) alert(data.error || 'Reset failed'); else alert('Rate limits reset: ' + JSON.stringify(data));
-                }} className="ml-2 px-3 py-2 bg-orange-600 text-white rounded">Reset rate limits</button>
+                }} className="px-3 py-2 bg-orange-600 text-white rounded text-sm">Reset rate limits</button>
                 <button onClick={async () => {
                   const emailInput = (document.getElementById('rlEmailInput') as HTMLInputElement | null)?.value?.trim();
                   if (!emailInput) return alert('Enter email to view');
                   const res = await fetch('/api/admin/reset-rate-limits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, email: emailInput, view: true }) });
                   const data = await res.json().catch(()=>({}));
                   if (!res.ok) alert(data.error || 'View failed'); else alert('Rate limits: ' + JSON.stringify(data));
-                }} className="ml-2 px-3 py-2 bg-yellow-600 text-white rounded">View rate limits</button>
+                }} className="px-3 py-2 bg-yellow-600 text-white rounded text-sm">View rate limits</button>
               </div>
-
-              <button onClick={removeSentinel} className="ml-2 px-3 py-2 bg-red-600 text-white rounded">Remove sentinel</button>
-              <button onClick={() => setShowAudit(true)} className="ml-2 px-3 py-2 bg-gray-700 text-white rounded">Open audit logs</button>
-              <button onClick={() => fetchAuditLogsQuick()} className="ml-2 px-3 py-2 bg-gray-600 text-white rounded">Quick preview</button>
             </div>
-          </div>
+          </details>
 
           {showAddGuest && showAddGuest.open && (
             <AddGuestModal

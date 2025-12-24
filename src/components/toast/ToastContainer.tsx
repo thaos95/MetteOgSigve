@@ -53,9 +53,9 @@ export default function ToastContainer({ toasts, removeToast }: { toasts: Array<
   if (!items.length) return null;
 
   const getVariantClasses = (variant?: string) => {
-    if (variant === 'success') return 'bg-emerald-600';
-    if (variant === 'error') return 'bg-red-600';
-    return 'bg-gray-900';
+    if (variant === 'success') return 'bg-[#5c7c5f]';
+    if (variant === 'error') return 'bg-[#a85454]';
+    return 'bg-[#6b5c4c]';
   };
 
   const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -64,26 +64,26 @@ export default function ToastContainer({ toasts, removeToast }: { toasts: Array<
   return (
     <div aria-live="polite" role="status" className="fixed top-4 right-4 z-50 space-y-2">
       {items.map(({ t, visible }) => (
-        <div key={t.id} data-toast-id={t.id} className={`${getVariantClasses(t.variant)} text-white px-4 py-2 rounded shadow ${transitionClass} ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+        <div key={t.id} data-toast-id={t.id} className={`${getVariantClasses(t.variant)} text-white px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm ${transitionClass} ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Icon variant={t.variant} />
-              <div className="text-sm">{t.message}</div>
+              <div className="text-sm font-medium">{t.message}</div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-auto">
               {t.action && (
                 <button onClick={() => {
                   try { t.action?.onClick?.(); } catch (e) { /* ignore */ }
                   // remove after action
                   setItems(prev => prev.map(p => p.t.id === t.id ? { ...p, visible: false } : p));
                   setTimeout(() => removeToast(t.id), ANIM_MS);
-                }} className="px-2 py-1 bg-white text-gray-900 rounded text-xs" aria-label={t.action.label}>{t.action.label}</button>
+                }} className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded text-xs font-medium transition-colors" aria-label={t.action.label}>{t.action.label}</button>
               )}
               <button aria-label="Close" onClick={() => {
                 // start hide animation then call remove
                 setItems(prev => prev.map(p => p.t.id === t.id ? { ...p, visible: false } : p));
                 setTimeout(() => removeToast(t.id), ANIM_MS);
-              }} className="text-xs opacity-90">×</button>
+              }} className="text-lg leading-none opacity-80 hover:opacity-100 transition-opacity ml-1">×</button>
             </div>
           </div>
         </div>
