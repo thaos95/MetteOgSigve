@@ -1,6 +1,11 @@
-import { NextResponse } from 'next/server';
+import { AppError, errorResponse } from '../../../../lib/errors';
 
-// Test route removed — used to validate dynamic params in dev
+/**
+ * Test route - DISABLED in all environments.
+ * 
+ * Previously used for dynamic parameter validation during development.
+ * Left as a stub to prevent 404 confusion.
+ */
 export async function GET() {
-  return NextResponse.json({ error: 'test route removed' }, { status: 404 });
+  return errorResponse(AppError.notFound('Test route is disabled'));
 }
