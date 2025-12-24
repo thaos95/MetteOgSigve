@@ -8,7 +8,7 @@ const MAX_TOASTS = 4;
 
 const ToastContext = createContext({ addToast: (_: ToastOptions) => '', removeToast: (id: string) => {} } as { addToast: (t: ToastOptions) => string; removeToast: (id: string) => void });
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children, maxToasts = 4 }: { children: React.ReactNode; maxToasts?: number }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const idCounter = useRef(0);
 
@@ -30,14 +30,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       returnedId = id;
       const next = [...prev, { ...opts, id } as Toast];
       // enforce max stacking limit
-      if (next.length > MAX_TOASTS) {
+      if (next.length > maxToasts) {
         // drop oldest
-        return next.slice(next.length - MAX_TOASTS);
+        return next.slice(next.length - maxToasts);
       }
       return next;
     });
     return returnedId;
-  }, []);
+  }, [maxToasts]);
 
   const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));

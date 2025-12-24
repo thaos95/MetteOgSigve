@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
-function getFocusableElements(el: HTMLElement) {
+function getFocusableElements(el: HTMLElement | null) {
+  if (!el) return [] as HTMLElement[];
   return Array.from(el.querySelectorAll<HTMLElement>(
     'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
   )).filter(e => !e.hasAttribute('disabled') && e.getAttribute('aria-hidden') !== 'true');
