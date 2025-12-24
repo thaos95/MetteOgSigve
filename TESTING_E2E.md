@@ -19,6 +19,9 @@ Run the modal test only:
 
 npm run test:e2e:modal
 
+Notes:
+- Playwright will automatically start the dev server for you (via `webServer` in `playwright.config.ts`) when it is not already running — useful for quick local runs. If you prefer to start your dev server manually, you can still do so and Playwright will reuse the existing server.
+
 Run a single test file (useful when developing):
 
 npx playwright test tests/audit-logs.spec.ts
