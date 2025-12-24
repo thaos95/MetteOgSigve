@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis';
+import { AppError } from './errors';
 
 // Create a Redis client from env. Upstash supports REST-style url+token; if a full REDIS_URL with password
 // is provided, attempt to derive a usable URL/token pair.
@@ -93,4 +94,158 @@ export async function getSlidingCount(key: string) {
 export async function resetRateLimit(key: string) {
   if (!redis) return;
   await redis.del(key);
+}
+
+// ============================================================================
+// Rate Limit Presets (Centralized Configuration)
+// ============================================================================
+
+/**
+ * Rate limit configuration presets.
+ * These match the limits defined in the abuse mitigation plan.
+ */
+export const RATE_LIMIT_PRESETS = {
+  // RSVP submission
+  rsvp: {
+    device: {
+      limit: Number(process.env.RL_SW_RSVP_DEVICE_LIMIT || 10),
+      windowMs: Number(process.env.RL_RSVP_WINDOW || 86400) * 1000, // 1 day
+      keyPrefix: 'rl:sw:rsvp:device:',
+    },
+    ip: {
+      limit: Number(process.env.RL_SW_RSVP_IP_LIMIT || 200),
+      windowMs: Number(process.env.RL_RSVP_WINDOW || 86400) * 1000,
+      keyPrefix: 'rl:sw:rsvp:ip:',
+    },
+    email: {
+      limit: Number(process.env.RL_SW_RSVP_EMAIL_LIMIT || 5),
+      windowMs: Number(process.env.RL_RSVP_WINDOW || 86400) * 1000,
+      keyPrefix: 'rl:sw:rsvp:email:',
+    },
+  },
+  // Token requests
+  token: {
+    device: {
+      limit: Number(process.env.RL_SW_TOKEN_DEVICE_LIMIT || 10),
+      windowMs: Number(process.env.RL_TOKEN_REQ_WINDOW || 3600) * 1000, // 1 hour
+      keyPrefix: 'rl:sw:token:device:',
+    },
+    ip: {
+      limit: Number(process.env.RL_SW_TOKEN_IP_LIMIT || 50),
+      windowMs: Number(process.env.RL_TOKEN_REQ_WINDOW || 3600) * 1000,
+      keyPrefix: 'rl:sw:token:ip:',
+    },
+    email: {
+      limit: Number(process.env.RL_SW_TOKEN_EMAIL_LIMIT || 5),
+      windowMs: Number(process.env.RL_TOKEN_REQ_WINDOW || 3600) * 1000,
+      keyPrefix: 'rl:sw:token:email:',
+    },
+  },
+} as const;
+
+/**
+ * Apply standard rate limits for RSVP creation.
+ * Throws AppError.rateLimited if any limit is exceeded.
+ */
+export async function applyRsvpRateLimits(context: {
+  ip: string;
+  deviceId: string;
+  email?: string | null;
+}): Promise<void> {
+  const { ip, deviceId, email } = context;
+  const p = RATE_LIMIT_PRESETS.rsvp;
+
+  // Device limit
+  const deviceResult = await slidingWindowLimit(
+    `${p.device.keyPrefix}${deviceId}`,
+    p.device.limit,
+    p.device.windowMs
+  );
+  if (deviceResult.limited) {
+    throw AppError.rateLimited(deviceResult.retryAfter, 'device');
+  }
+
+  // IP limit
+  const ipResult = await slidingWindowLimit(
+    `${p.ip.keyPrefix}${ip}`,
+    p.ip.limit,
+    p.ip.windowMs
+  );
+  if (ipResult.limited) {
+    throw AppError.rateLimited(ipResult.retryAfter, 'ip');
+  }
+
+  // Email limit (if email provided)
+  if (email) {
+    const emailResult = await slidingWindowLimit(
+      `${p.email.keyPrefix}${email}`,
+      p.email.limit,
+      p.email.windowMs
+    );
+    if (emailResult.limited) {
+      throw AppError.rateLimited(emailResult.retryAfter, 'email');
+    }
+  }
+}
+
+/**
+ * Apply standard rate limits for token requests.
+ * Returns { escalate: true } if device limit is exceeded but should try CAPTCHA.
+ * Throws AppError.rateLimited if IP or email limits exceeded.
+ */
+export async function applyTokenRateLimits(context: {
+  ip: string;
+  deviceId: string;
+  email?: string | null;
+  isVerified?: boolean;
+}): Promise<{ escalate: boolean }> {
+  const { ip, deviceId, email, isVerified } = context;
+  const p = RATE_LIMIT_PRESETS.token;
+
+  // Device limit - escalate to CAPTCHA instead of hard block
+  const deviceResult = await slidingWindowLimit(
+    `${p.device.keyPrefix}${deviceId}`,
+    p.device.limit,
+    p.device.windowMs
+  );
+  const escalate = deviceResult.limited;
+
+  // IP limit - hard block
+  const ipResult = await slidingWindowLimit(
+    `${p.ip.keyPrefix}${ip}`,
+    p.ip.limit,
+    p.ip.windowMs
+  );
+  if (ipResult.limited) {
+    throw AppError.rateLimited(ipResult.retryAfter, 'ip');
+  }
+
+  // Email limit - verified users get 2x limit
+  if (email) {
+    const emailLimit = isVerified ? p.email.limit * 2 : p.email.limit;
+    const emailResult = await slidingWindowLimit(
+      `${p.email.keyPrefix}${email}`,
+      emailLimit,
+      p.email.windowMs
+    );
+    if (emailResult.limited) {
+      throw AppError.rateLimited(emailResult.retryAfter, 'email');
+    }
+  }
+
+  return { escalate };
+}
+
+/**
+ * Extract rate limit context from request.
+ */
+export function getRateLimitContext(req: Request, body?: { deviceId?: string }) {
+  return {
+    ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+        || req.headers.get('x-real-ip')
+        || 'unknown',
+    deviceId: req.headers.get('x-device-id')
+        || body?.deviceId
+        || 'unknown-device',
+  };
 }
