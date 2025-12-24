@@ -6,7 +6,9 @@ test('duplicate prompt flow: shows existing suggestion and can create anyway', a
   // ensure a fresh test RSVP exists via API
   const ts = Date.now();
   const primary = { firstName: 'Test', lastName: `Dup${ts}`, email: `dup+${ts}@example.com`, attending: true, party: [{ firstName: 'Guest', lastName: `Dup${ts}`, attending: true }] };
-  const createRes = await request.post(`${base}/api/rsvp`, { data: primary });
+  const deviceId = `playwright-dup-${ts}`;
+  const createRes = await request.post(`${base}/api/rsvp`, { data: primary, headers: { 'x-device-id': deviceId } });
+  if (!createRes.ok()) { const txt = await createRes.text(); console.error('Create RSVP failed:', createRes.status(), txt); }
   expect(createRes.ok()).toBeTruthy();
 
   // Now navigate to the site and attempt a fuzzy duplicate

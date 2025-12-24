@@ -4,9 +4,14 @@ const base = process.env.BASE_URL || 'http://localhost:3000';
 
 test('admin add guest via modal works and validates', async ({ page, request }) => {
   const ts = Date.now();
+  const deviceId = `playwright-modal-${ts}`;
   const payload = { firstName: 'ModalTest', lastName: `Party${ts}`, email: `modal+${ts}@example.com`, attending: true, party: [] };
 
-  const create = await request.post(`${base}/api/rsvp`, { data: payload });
+  const create = await request.post(`${base}/api/rsvp`, { data: payload, headers: { 'x-device-id': deviceId } });
+  if (!create.ok()) {
+    const txt = await create.text();
+    console.error('Create RSVP failed:', create.status(), txt);
+  }
   expect(create.ok()).toBeTruthy();
   const created = await create.json();
   const rsvpId = created.rsvp.id;

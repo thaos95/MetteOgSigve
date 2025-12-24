@@ -4,8 +4,10 @@ const base = process.env.BASE_URL || 'http://localhost:3000';
 
 test('admin can edit, remove, reorder, and add guests', async ({ page, request }) => {
   const ts = Date.now();
+  const deviceId = `playwright-admin-edit-${ts}`;
   const payload = { firstName: 'EditTest', lastName: `Party${ts}`, email: `edittest+${ts}@example.com`, attending: false, party: [{ firstName: 'A', lastName: 'One', attending: false }, { firstName: 'B', lastName: 'Two', attending: false }] };
-  const create = await request.post(`${base}/api/rsvp`, { data: payload });
+  const create = await request.post(`${base}/api/rsvp`, { data: payload, headers: { 'x-device-id': deviceId } });
+  if (!create.ok()) { const txt = await create.text(); console.error('Create RSVP failed:', create.status(), txt); }
   expect(create.ok()).toBeTruthy();
 
   // navigate to admin and login

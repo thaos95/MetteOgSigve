@@ -4,10 +4,12 @@ const base = process.env.BASE_URL || 'http://localhost:3000';
 
 test('audit logs modal displays recent admin actions and detail view', async ({ page, request }) => {
   const ts = Date.now();
+  const deviceId = `playwright-audit-${ts}`;
   const payload = { firstName: 'AuditUI', lastName: `Party${ts}`, email: `auditui+${ts}@example.com`, attending: false, party: [] };
 
   // Create RSVP
-  const create = await request.post(`${base}/api/rsvp`, { data: payload });
+  const create = await request.post(`${base}/api/rsvp`, { data: payload, headers: { 'x-device-id': deviceId } });
+  if (!create.ok()) { const txt = await create.text(); console.error('Create RSVP failed:', create.status(), txt); }
   expect(create.ok()).toBeTruthy();
   const created = await create.json();
   const rsvpId = created.rsvp.id;
