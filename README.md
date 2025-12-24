@@ -2,6 +2,32 @@
 
 This is a simple Next.js scaffold for a wedding site with RSVP handling using Supabase.
 
+## Architecture Overview
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/rsvp/          # Guest RSVP endpoints
+│   ├── api/admin/         # Admin endpoints (password-protected)
+│   └── [pages]/           # Public pages (rsvp, gallery, travel)
+├── components/            # React UI components
+├── domain/rsvp/           # Business logic (pure functions)
+│   ├── types.ts           # Core types
+│   ├── schema.ts          # Zod validation
+│   ├── validation.ts      # Name/email normalization
+│   └── duplicate.ts       # Fuzzy matching logic
+├── lib/                   # Infrastructure + utilities
+│   ├── supabaseServer.ts  # Database client
+│   ├── rateLimit.ts       # Redis rate limiting
+│   ├── mail.ts            # Email (SendGrid/SMTP)
+│   ├── errors.ts          # Error handling
+│   └── adminAuth.ts       # Admin authentication
+└── hooks/                 # React hooks
+tests/                     # Playwright E2E tests
+```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed architecture and conventions.
+
 ## Local setup
 1. Copy `.env.example` to `.env.local` and fill the Supabase values.
 2. Install packages: `npm install`.
