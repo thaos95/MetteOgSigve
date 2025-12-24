@@ -41,9 +41,23 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
   await page.getByRole('button', { name: 'Open audit logs' }).click();
   await expect(page.locator('text=Admin Audit Logs')).toBeVisible();
 
-  // Ensure a row referencing the rsvp or action exists
+  // Verify count/filed presence
+  await expect(page.locator('text=Showing')).toBeVisible();
+  await expect(page.locator('text=Page')).toBeVisible();
+
+  // Use filter to search for add-guest actions
+  await page.fill('input[placeholder="Filter action"]', 'add-guest');
+  await page.click('button:has-text("Filter")');
+  await page.waitForTimeout(300); // short wait for filter to apply
+
+  // Ensure a row referencing the action exists
   const row = page.locator('table').locator('tr').filter({ hasText: 'add-guest' }).first();
   await expect(row).toBeVisible();
+
+  // Assert pagination state (prev disabled on first page)
+  const prev = page.locator('button:has-text("Prev")');
+  await expect(prev).toBeVisible();
+  await expect(prev).toBeDisabled();
 
   // View details and assert the after JSON includes the guest name
   await row.locator('button:has-text("View")').click();

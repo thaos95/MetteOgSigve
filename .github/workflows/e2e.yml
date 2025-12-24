@@ -28,3 +28,27 @@ jobs:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           # Provide other secrets as needed for DB or SMTP (for export tests), or mock them in CI
+
+  e2e-audit-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install only Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps
+      - name: Start dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3000
+      - name: Run audit logs smoke test
+        run: npx playwright test tests/audit-logs.spec.ts --reporter=list
+        env:
+          BASE_URL: http://localhost:3000
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          # Add any other secrets needed for this specific test
