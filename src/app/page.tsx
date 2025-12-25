@@ -12,7 +12,8 @@ export default async function Home() {
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white p-6">
           <p className="text-sm uppercase tracking-[0.3em] mb-3 opacity-90">You are invited to celebrate</p>
           <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-medium mb-4">Mette & Sigve</h2>
-          <p className="text-lg opacity-90 mb-8">are getting married</p>
+          <p className="text-lg opacity-90 mb-2">are getting married</p>
+          <p className="text-xl sm:text-2xl font-serif opacity-95 mb-8">Friday, 3rd of July 2026</p>
           <Link 
             href="/rsvp" 
             className="btn-primary text-base px-8 py-3 bg-white/20 backdrop-blur-sm border border-white/40 hover:bg-white/30"

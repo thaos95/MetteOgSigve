@@ -153,7 +153,8 @@ export async function POST(req: Request) {
 
         const mod = await import('../../../lib/mail');
         const sendMail = mod?.sendMail;
-        const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || ''}/rsvp?token=${token}`;
+        const getBaseUrl = mod?.getBaseUrl;
+        const link = `${getBaseUrl?.() ?? ''}/rsvp?token=${token}`;
         const guestList = (Array.isArray(party) && party.length > 0) ? party.map((p:any)=>`${p.firstName||p.first_name||''} ${p.lastName||p.last_name||''}`.trim()).filter(Boolean).join(', ') : 'None';
         const html = `<p>Hi ${fullName},</p>
           <p>Thanks — your RSVP has been recorded. Please <a href="${link}">verify your email</a> to confirm. This link expires in 1 hour.</p>

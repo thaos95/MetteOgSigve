@@ -84,7 +84,8 @@ export async function POST(req: Request) {
     try {
       const mod = await import('../../../../lib/mail');
       const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed', res); }).catch(e => console.error('Mail send error', e)) : null);
-      const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || ''}/rsvp?token=${token}`;
+      const getBaseUrl = mod?.getBaseUrl;
+      const link = `${getBaseUrl?.() ?? ''}/rsvp?token=${token}`;
       const html = `<p>Hi ${rsv.name},</p>
         <p>Click the link below to verify your RSVP email. This link expires in 1 hour.</p>
         <p><a href="${link}">Verify my RSVP</a></p>
