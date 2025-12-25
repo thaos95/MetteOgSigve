@@ -8,14 +8,12 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     
-    // Validate admin auth
-    const authResult = adminAuthSchema.safeParse(body);
-    if (!authResult.success) {
-      return errorResponse(zodToAppError(authResult.error as ZodError));
+    // Check password first for proper 401 response (before Zod validation)
+    if (!body?.password) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
-    
-    if (authResult.data.password !== process.env.ADMIN_PASSWORD) {
-      return errorResponse(AppError.unauthorized());
+    if (body.password !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
 
     const { data, error } = await supabaseServer.from("rsvps").select("*").order("created_at", { ascending: false });

@@ -41,7 +41,7 @@ export type DuplicateCheckResult = {
 /**
  * Check if two people match using fuzzy name matching.
  * Rules:
- * - Last name must match: exact tokens OR one contains the other
+ * - Last name must match: exact tokens OR one token is substring of another
  * - First name must match: exact, prefix, or first 3 chars equal
  */
 export function personMatches(a: PersonToMatch, b: PersonToMatch): boolean {
@@ -55,12 +55,16 @@ export function personMatches(a: PersonToMatch, b: PersonToMatch): boolean {
     return false;
   }
 
-  // Last name check: exact match OR one contains any token from the other
+  // Last name check: exact match OR any token from one is substring of any token from other
   const lastNamesExact = aLastTokens.join(' ') === bLastTokens.join(' ');
-  const aContainsB = aLastTokens.some(x => bLastTokens.includes(x));
-  const bContainsA = bLastTokens.some(x => aLastTokens.includes(x));
+  const aTokenSubstringOfB = aLastTokens.some(aToken => 
+    bLastTokens.some(bToken => bToken.includes(aToken))
+  );
+  const bTokenSubstringOfA = bLastTokens.some(bToken => 
+    aLastTokens.some(aToken => aToken.includes(bToken))
+  );
 
-  if (!lastNamesExact && !aContainsB && !bContainsA) {
+  if (!lastNamesExact && !aTokenSubstringOfB && !bTokenSubstringOfA) {
     return false;
   }
 
