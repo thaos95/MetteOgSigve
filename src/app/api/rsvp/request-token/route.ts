@@ -115,7 +115,8 @@ export async function POST(req: Request) {
     try {
       const mod = await import('../../../../lib/mail');
       const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed (sync fallback)', res); }).catch(e => console.error('Mail send error (sync fallback)', e)) : null);
-      const link = `${process.env.NEXT_PUBLIC_VERCEL_URL || ''}/rsvp?token=${token}`;
+      const getBaseUrl = mod?.getBaseUrl;
+      const link = `${getBaseUrl?.() ?? ''}/rsvp?token=${token}`;
       const html = `<p>Hi ${rsv.name},</p><p>Use the secure link below to ${purpose === 'cancel' ? 'cancel' : 'edit'} your RSVP. The link expires in 1 hour.</p><p><a href="${link}">Open RSVP</a></p>`;
       if (typeof sendAsync === 'function') {
         sendAsync({ to: sendTo ?? rsv.email ?? rsv.email, subject: 'Mette & Sigve — RSVP secure link', text: `Open your RSVP: ${link}`, html });
