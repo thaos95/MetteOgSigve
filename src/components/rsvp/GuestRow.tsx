@@ -20,39 +20,39 @@ export function GuestRow({ guest, index, onUpdate, onRemove }: GuestRowProps) {
   return (
     <div className="p-4 bg-cream/50 border border-soft-border rounded-lg space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-warm-gray">Guest {index + 1}</span>
+        <span className="text-sm font-medium text-warm-gray">Gjest {index + 1}</span>
         <button
           type="button"
-          aria-label={`Remove guest ${index + 1}`}
+          aria-label={`Fjern gjest ${index + 1}`}
           onClick={() => onRemove(index)}
           className="btn-danger text-sm px-3 py-1"
         >
-          Remove
+          Fjern
         </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="sr-only" htmlFor={`guest-${index}-first`}>
-            Guest {index + 1} first name
+            Gjest {index + 1} fornavn
           </label>
           <input
             id={`guest-${index}-first`}
             className="input"
             value={guest.firstName}
             onChange={(e) => onUpdate(index, { firstName: e.target.value })}
-            placeholder="First name"
+            placeholder="Fornavn"
           />
         </div>
         <div>
           <label className="sr-only" htmlFor={`guest-${index}-last`}>
-            Guest {index + 1} last name
+            Gjest {index + 1} etternavn
           </label>
           <input
             id={`guest-${index}-last`}
             className="input"
             value={guest.lastName}
             onChange={(e) => onUpdate(index, { lastName: e.target.value })}
-            placeholder="Last name"
+            placeholder="Etternavn"
           />
         </div>
       </div>
@@ -64,7 +64,7 @@ export function GuestRow({ guest, index, onUpdate, onRemove }: GuestRowProps) {
           onChange={(e) => onUpdate(index, { attending: e.target.checked })}
           className="w-4 h-4 accent-primary"
         />
-        <span className="text-sm text-warm-gray">Attending</span>
+        <span className="text-sm text-warm-gray">Kommer</span>
       </label>
     </div>
   );

@@ -154,7 +154,7 @@ export default function RSVPForm() {
         if (data.error?.includes("token required") || data.error?.includes("adminPassword")) {
           setStatus("idle");
           alert(
-            'To update your RSVP, you need a secure link. Please expand "Need to edit or cancel an existing RSVP?" below and request an edit link.'
+            'For å oppdatere svaret ditt trenger du en sikker lenke. Vennligst utvid "Trenger du å endre eller kansellere et eksisterende svar?" nedenfor og be om en endringslenke.'
           );
         } else {
           setStatus("error");
@@ -196,30 +196,30 @@ export default function RSVPForm() {
         if (res.ok) {
           if (d?.devToken) {
             setPastedToken(d.devToken);
-            alert("Development mode: Edit token applied automatically. You can now update your RSVP.");
+            alert("Utviklermodus: Endringstoken lagt til automatisk. Du kan nå oppdatere svaret ditt.");
           } else {
             alert(
-              `We've sent a secure link to ${existing.email}. Please check your inbox and click the link to complete your edit.`
+              `Vi har sendt en sikker lenke til ${existing.email}. Vennligst sjekk innboksen din og klikk på lenken for å fullføre endringen.`
             );
             setEditId(null);
           }
         } else {
-          alert(d.error ?? "Could not request edit link. Please try again.");
+          alert(d.error ?? "Kunne ikke be om endringslenke. Vennligst prøv igjen.");
           setEditId(null);
         }
       } catch (e) {
         console.error("Failed to request edit token", e);
-        alert("Could not request edit link. Please try again.");
+        alert("Kunne ikke be om endringslenke. Vennligst prøv igjen.");
         setEditId(null);
       }
     } else if (!existing.email) {
-      alert("This RSVP has no email on record. Please contact us directly to make changes.");
+      alert("Dette svaret har ingen e-post registrert. Vennligst kontakt oss direkte for å gjøre endringer.");
       setEditId(null);
     }
   }
 
   async function cancelExisting(id: string) {
-    if (!confirm("Cancel this RSVP?")) return;
+    if (!confirm("Kansellere dette svaret?")) return;
     const body: any = {};
     if (pastedToken) body.token = pastedToken;
     const res = await fetch(`/api/rsvp/${id}`, {
@@ -228,11 +228,11 @@ export default function RSVPForm() {
       body: JSON.stringify(body),
     });
     if (res.ok) {
-      alert("RSVP cancelled");
+      alert("Svar slettet");
       setShowExisting(null);
     } else {
       const d = await res.json().catch(() => ({}));
-      alert(d.error ?? "Failed to cancel");
+      alert(d.error ?? "Kunne ikke slette");
     }
   }
 
@@ -254,10 +254,10 @@ export default function RSVPForm() {
         setShowExisting(null);
       } else {
         const d = await res.json();
-        alert(d.error || "Failed");
+        alert(d.error || "Feilet");
       }
     } catch {
-      alert("Failed");
+      alert("Feilet");
     }
   }
 
@@ -298,7 +298,7 @@ export default function RSVPForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="first-name" className="block text-sm font-medium text-primary mb-2">
-                First name
+                Fornavn
               </label>
               <input
                 id="first-name"
@@ -306,12 +306,12 @@ export default function RSVPForm() {
                 onChange={(e) => setFirstName(e.target.value)}
                 className="input"
                 required
-                placeholder="Your first name"
+                placeholder="Ditt fornavn"
               />
             </div>
             <div>
               <label htmlFor="last-name" className="block text-sm font-medium text-primary mb-2">
-                Last name
+                Etternavn
               </label>
               <input
                 id="last-name"
@@ -319,7 +319,7 @@ export default function RSVPForm() {
                 onChange={(e) => setLastName(e.target.value)}
                 className="input"
                 required
-                placeholder="Your last name"
+                placeholder="Ditt etternavn"
               />
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function RSVPForm() {
           {/* Email Field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-primary mb-2">
-              Email
+              E-post
             </label>
             <input
               id="email"
@@ -335,7 +335,7 @@ export default function RSVPForm() {
               onChange={(e) => setEmail(e.target.value)}
               className="input"
               type="email"
-              placeholder="your@email.com"
+              placeholder="din@epost.no"
             />
           </div>
 
@@ -354,8 +354,8 @@ export default function RSVPForm() {
           {/* Notes */}
           <div>
             <label htmlFor="notes" className="block text-sm font-medium text-primary mb-2">
-              Notes{" "}
-              <span className="font-normal text-warm-gray">(dietary requirements, song requests, etc.)</span>
+              Melding{" "}
+              <span className="font-normal text-warm-gray">(allergier, sangønsker, etc.)</span>
             </label>
             <textarea
               id="notes"
@@ -363,7 +363,7 @@ export default function RSVPForm() {
               onChange={(e) => setNotes(e.target.value)}
               className="input min-h-[100px] resize-y"
               rows={4}
-              placeholder="Let us know if there's anything we should know..."
+              placeholder="Gi oss beskjed om det er noe vi bør vite..."
             />
           </div>
 
@@ -392,12 +392,12 @@ export default function RSVPForm() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Sending...
+                  Sender...
                 </span>
               ) : editId ? (
-                "Update RSVP"
+                "Oppdater svar"
               ) : (
-                "Send RSVP"
+                "Send svar"
               )}
             </button>
           </div>

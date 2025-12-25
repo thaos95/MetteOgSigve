@@ -7,26 +7,26 @@ export default function Travel() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Page Header */}
       <div className="text-center mb-12">
-        <h1 className="font-serif text-4xl text-primary mb-4">Travel & Accommodation</h1>
+        <h1 className="font-serif text-4xl text-primary mb-4">Reise og overnatting</h1>
         <p className="text-warm-gray max-w-xl mx-auto">
-          Everything you need to know about getting here, the ceremony, the celebration venue, and where to stay.
+          Her finner du informasjon om vielsen, festen, reise og overnatting.
         </p>
       </div>
 
       {/* Timeline Overview */}
       <section className="card mb-8 bg-accent/5">
-        <h2 className="font-serif text-2xl text-primary mb-4 text-center">The Day at a Glance</h2>
+        <h2 className="font-serif text-2xl text-primary mb-4 text-center">Dagen kort oppsummert</h2>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8">
           <div className="text-center">
             <div className="text-2xl font-serif text-primary">12:30</div>
-            <div className="text-warm-gray text-sm">Ceremony</div>
-            <div className="text-xs text-accent">Botne Church</div>
+            <div className="text-warm-gray text-sm">Vielse</div>
+            <div className="text-xs text-accent">Botne kirke</div>
           </div>
           <div className="hidden sm:block text-3xl text-accent">→</div>
           <div className="sm:hidden text-2xl text-accent">↓</div>
           <div className="text-center">
             <div className="text-2xl font-serif text-primary">14:30</div>
-            <div className="text-warm-gray text-sm">Celebration</div>
+            <div className="text-warm-gray text-sm">Feiring</div>
             <div className="text-xs text-accent">Midtåsen</div>
           </div>
         </div>
@@ -41,27 +41,27 @@ export default function Travel() {
             </svg>
           </div>
           <div className="flex-1">
-            <h2 className="font-serif text-2xl text-primary mb-2">Ceremony – Botne Church</h2>
+            <h2 className="font-serif text-2xl text-primary mb-2">Vielse – Botne kirke</h2>
             
             <div className="grid md:grid-cols-2 gap-6 mb-4">
               <div>
                 <div className="mb-4">
                   <h3 className="font-medium text-primary flex items-center gap-2 mb-1">
-                    <span>📍</span> Location
+                    <span>📍</span> Sted
                   </h3>
                   <p className="text-warm-gray">
                     <strong>Botne kirke</strong><br />
                     Kirkeveien 19<br />
-                    3085 Holmestrand, Norway
+                    3085 Holmestrand, Norge
                   </p>
                 </div>
                 
                 <div className="mb-4">
                   <h3 className="font-medium text-primary flex items-center gap-2 mb-1">
-                    <span>🕰</span> Date & Time
+                    <span>🕰</span> Tidspunkt
                   </h3>
                   <p className="text-warm-gray">
-                    <strong>Friday, 3rd of July 2026 at 12:30</strong>
+                    <strong>Fredag 3. juli 2026 kl. 12:30</strong>
                   </p>
                 </div>
               </div>
@@ -69,7 +69,7 @@ export default function Travel() {
               <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
                 <Image 
                   src="/Botne Kirke/Botne-kirke-2.jpg" 
-                  alt="Botne Church - a beautiful medieval stone church"
+                  alt="Botne kirke - en vakker middelalderkirke"
                   fill
                   className="object-cover"
                 />
@@ -77,14 +77,14 @@ export default function Travel() {
             </div>
             
             <p className="text-warm-gray mb-4">
-              Botne Church is a beautiful medieval stone church from the 13th century, located in quiet surroundings just outside Holmestrand. The ceremony will begin promptly at 12:30, so we kindly ask guests to arrive in good time.
+              Botne kirke er en vakker middelalderkirke fra 1200-tallet, som ligger i rolige omgivelser like utenfor Holmestrand. Vielsen starter presis kl. 12:30, så vi ber gjester om å være ute i god tid.
             </p>
             
             <div className="bg-cream/50 rounded-lg p-4 border border-soft-border mb-4">
-              <h3 className="font-medium text-primary mb-2">Practical Information</h3>
+              <h3 className="font-medium text-primary mb-2">Praktisk informasjon</h3>
               <ul className="text-warm-gray text-sm space-y-1">
-                <li>• <strong>Parking</strong> is available around the church</li>
-                <li>• <strong>Restrooms</strong> are available on site during the ceremony</li>
+                <li>• <strong>Parkering</strong> er tilgjengelig ved kirken</li>
+                <li>• <strong>Toaletter</strong> finnes på stedet</li>
               </ul>
             </div>
             
@@ -98,7 +98,7 @@ export default function Travel() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Botne Church location"
+                title="Botne kirke kart"
               />
             </div>
             
@@ -112,7 +112,7 @@ export default function Travel() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              Open in Google Maps
+              Åpne i Google Maps
             </a>
           </div>
         </div>
@@ -128,27 +128,27 @@ export default function Travel() {
             </svg>
           </div>
           <div className="flex-1">
-            <h2 className="font-serif text-2xl text-primary mb-2">Celebration Venue – Midtåsen</h2>
+            <h2 className="font-serif text-2xl text-primary mb-2">Feiring – Midtåsen</h2>
             
             <div className="grid md:grid-cols-2 gap-6 mb-4">
               <div>
                 <div className="mb-4">
                   <h3 className="font-medium text-primary flex items-center gap-2 mb-1">
-                    <span>📍</span> Location
+                    <span>📍</span> Sted
                   </h3>
                   <p className="text-warm-gray">
                     <strong>Midtåsen</strong><br />
                     Midtåsveien 2A<br />
-                    3226 Sandefjord, Norway
+                    3226 Sandefjord, Norge
                   </p>
                 </div>
                 
                 <div className="mb-4">
                   <h3 className="font-medium text-primary flex items-center gap-2 mb-1">
-                    <span>🕰</span> Arrival
+                    <span>🕰</span> Ankomst
                   </h3>
                   <p className="text-warm-gray">
-                    <strong>From 14:30</strong>
+                    <strong>Fra kl. 14:30</strong>
                   </p>
                 </div>
               </div>
@@ -156,7 +156,7 @@ export default function Travel() {
               <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
                 <Image 
                   src="/midtaasen/Luftfoto-fjorden.jpg" 
-                  alt="Midtåsen - historic villa estate overlooking the fjord"
+                  alt="Midtåsen - historisk villa med utsikt"
                   fill
                   className="object-cover"
                 />
@@ -164,28 +164,28 @@ export default function Travel() {
             </div>
             
             <p className="text-warm-gray mb-4">
-              Following the ceremony, we invite you to join us at Midtåsen for the celebration. Midtåsen is a historic villa estate overlooking Sandefjord, surrounded by beautiful gardens and a sculpture park. The venue offers stunning views of the fjord and plenty of outdoor space to enjoy throughout the day.
+              Etter vielsen inviterer vi til feiring på Midtåsen. Midtåsen er en historisk villa som ligger høyt over Sandefjord, omgitt av vakre hager og en skulpturpark. Stedet byr på fantastisk utsikt over fjorden og god plass til å nyte dagen utendørs.
             </p>
             
             {/* Image Gallery */}
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="relative aspect-square rounded-lg overflow-hidden">
-                <Image src="/midtaasen/Hagen.jpg" alt="The gardens at Midtåsen" fill className="object-cover" />
+                <Image src="/midtaasen/Hagen.jpg" alt="Hagen på Midtåsen" fill className="object-cover" />
               </div>
               <div className="relative aspect-square rounded-lg overflow-hidden">
-                <Image src="/midtaasen/utsikt.jpg" alt="View from Midtåsen" fill className="object-cover" />
+                <Image src="/midtaasen/utsikt.jpg" alt="Utsikt fra Midtåsen" fill className="object-cover" />
               </div>
               <div className="relative aspect-square rounded-lg overflow-hidden">
-                <Image src="/midtaasen/midtaasen-innkjorsel.jpg" alt="Midtåsen entrance" fill className="object-cover" />
+                <Image src="/midtaasen/midtaasen-innkjorsel.jpg" alt="Innkjøring til Midtåsen" fill className="object-cover" />
               </div>
             </div>
             
             <div className="bg-cream/50 rounded-lg p-4 border border-soft-border mb-4">
-              <h3 className="font-medium text-primary mb-2">Practical Information</h3>
+              <h3 className="font-medium text-primary mb-2">Praktisk informasjon</h3>
               <ul className="text-warm-gray text-sm space-y-1">
-                <li>• Free parking available just before the main gate</li>
-                <li>• The grounds are partially outdoors – we recommend comfortable footwear</li>
-                <li>• The sculpture park is open and free to explore</li>
+                <li>• Gratis parkering tilgjengelig like før hovedporten</li>
+                <li>• Deler av området er utendørs – vi anbefaler behagelige sko</li>
+                <li>• Skulpturparken er åpen og fri til å utforskes</li>
               </ul>
             </div>
             
@@ -199,7 +199,7 @@ export default function Travel() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Midtåsen venue location"
+                title="Midtåsen kart"
               />
             </div>
             
@@ -213,7 +213,7 @@ export default function Travel() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              Open in Google Maps
+              Åpne i Google Maps
             </a>
           </div>
         </div>
@@ -228,22 +228,22 @@ export default function Travel() {
             </svg>
           </div>
           <div className="flex-1">
-            <h2 className="font-serif text-2xl text-primary mb-2">Getting from the Church to the Venue</h2>
+            <h2 className="font-serif text-2xl text-primary mb-2">Fra kirken til festlokalet</h2>
             <div className="flex flex-wrap gap-6 text-warm-gray mb-4">
               <div>
                 <span className="text-2xl">🚗</span>
-                <p><strong>Driving time:</strong> approx. 30–35 minutes</p>
+                <p><strong>Kjøretid:</strong> ca. 30–35 minutter</p>
               </div>
               <div>
                 <span className="text-2xl">📏</span>
-                <p><strong>Distance:</strong> approx. 30 km</p>
+                <p><strong>Avstand:</strong> ca. 30 km</p>
               </div>
             </div>
             <p className="text-warm-gray">
-              We recommend leaving the church area shortly after the ceremony to arrive comfortably at Midtåsen from 14:30.
+              Vi anbefaler å kjøre fra kirken kort tid etter vielsen for å ankomme Midtåsen fra kl. 14:30.
             </p>
             <p className="text-sm text-accent mt-2 italic">
-              Additional transport information will be shared closer to the date if group transport is arranged.
+              Mer informasjon om transport kommer hvis det blir satt opp felles transport.
             </p>
           </div>
         </div>
@@ -258,36 +258,36 @@ export default function Travel() {
             </svg>
           </div>
           <div className="flex-1">
-            <h2 className="font-serif text-2xl text-primary mb-4">Getting There</h2>
+            <h2 className="font-serif text-2xl text-primary mb-4">Slik kommer du deg hit</h2>
             <div className="space-y-6 text-warm-gray">
               <div>
                 <h3 className="font-medium text-primary mb-2 flex items-center gap-2">
-                  <span>✈️</span> By Air
+                  <span>✈️</span> Med fly
                 </h3>
                 <ul className="text-sm space-y-2">
-                  <li><strong>Sandefjord Airport Torp (TRF)</strong> – approx. 15 minutes by car to Midtåsen</li>
-                  <li><strong>Oslo Airport Gardermoen (OSL)</strong> – approx. 1.5–2 hours by car or train</li>
+                  <li><strong>Sandefjord Lufthavn Torp (TRF)</strong> – ca. 15 minutter med bil til Midtåsen</li>
+                  <li><strong>Oslo Lufthavn Gardermoen (OSL)</strong> – ca. 1,5–2 timer med bil eller tog</li>
                 </ul>
-                <p className="text-sm mt-2">From both airports, you can travel by rental car, train + taxi, or taxi directly.</p>
+                <p className="text-sm mt-2">Fra begge flyplasser kan du reise med leiebil, tog + taxi, eller taxi direkte.</p>
               </div>
               
               <div>
                 <h3 className="font-medium text-primary mb-2 flex items-center gap-2">
-                  <span>🚆</span> By Train
+                  <span>🚆</span> Med tog
                 </h3>
                 <ul className="text-sm space-y-2">
-                  <li><strong>Sandefjord Station</strong> – close to Midtåsen</li>
-                  <li><strong>Holmestrand Station</strong> – closest station to Botne Church</li>
+                  <li><strong>Sandefjord stasjon</strong> – nært Midtåsen</li>
+                  <li><strong>Holmestrand stasjon</strong> – nærmest Botne kirke</li>
                 </ul>
-                <p className="text-sm mt-2">Norwegian trains are frequent and reliable. From the stations, taxis are readily available.</p>
+                <p className="text-sm mt-2">Tog går ofte og er pålitelige. Taxi er tilgjengelig fra stasjonene.</p>
               </div>
               
               <div>
                 <h3 className="font-medium text-primary mb-2 flex items-center gap-2">
-                  <span>🚗</span> By Car
+                  <span>🚗</span> Med bil
                 </h3>
                 <p className="text-sm">
-                  Sandefjord and Holmestrand are easily accessible by car from Oslo and other parts of Norway. We recommend using Google Maps for up-to-date directions and traffic conditions.
+                  Sandefjord og Holmestrand er lett tilgjengelig med bil fra Oslo og andre deler av landet. Vi anbefaler Google Maps for veibeskrivelse.
                 </p>
               </div>
             </div>
@@ -304,14 +304,14 @@ export default function Travel() {
             </svg>
           </div>
           <div className="flex-1">
-            <h2 className="font-serif text-2xl text-primary mb-2">Where to Stay</h2>
+            <h2 className="font-serif text-2xl text-primary mb-2">Overnatting</h2>
             <p className="text-warm-gray mb-4">
-              There are many great places to stay in <strong>Sandefjord</strong>, which is the most convenient location after the celebration.
+              Det er mange fine steder å bo i <strong>Sandefjord</strong>, som er mest praktisk etter festen.
             </p>
             
             <div className="grid gap-4 sm:grid-cols-2 mb-4">
               <div className="p-4 bg-cream/50 rounded-lg border border-soft-border">
-                <h3 className="font-medium text-primary mb-2">Recommended Hotels in Sandefjord</h3>
+                <h3 className="font-medium text-primary mb-2">Anbefalte hoteller i Sandefjord</h3>
                 <ul className="text-sm text-warm-gray space-y-1">
                   <li>• Clarion Collection Hotel Atlantic</li>
                   <li>• Scandic Park Sandefjord</li>
@@ -319,16 +319,16 @@ export default function Travel() {
                 </ul>
               </div>
               <div className="p-4 bg-cream/50 rounded-lg border border-soft-border">
-                <h3 className="font-medium text-primary mb-2">Alternative Nearby Options</h3>
+                <h3 className="font-medium text-primary mb-2">Andre alternativer i nærheten</h3>
                 <ul className="text-sm text-warm-gray space-y-1">
-                  <li>• Holmestrand & Åsgårdstrand (limited)</li>
-                  <li>• Tønsberg (short drive)</li>
+                  <li>• Holmestrand & Åsgårdstrand (begrenset)</li>
+                  <li>• Tønsberg (kort kjøretur)</li>
                 </ul>
               </div>
             </div>
             
             <p className="text-sm text-accent italic">
-              We recommend booking accommodation early, as July is a popular summer period.
+              Vi anbefaler å bestille overnatting tidlig, da juli er en populær sommermåned.
             </p>
           </div>
         </div>
@@ -336,13 +336,13 @@ export default function Travel() {
 
       {/* Contact for Help */}
       <section className="text-center py-8 border-t border-soft-border">
-        <h2 className="font-serif text-xl text-primary mb-2">Questions?</h2>
+        <h2 className="font-serif text-xl text-primary mb-2">Spørsmål?</h2>
         <p className="text-warm-gray mb-4">
-          If you have any questions regarding travel, accommodation, or logistics, feel free to reach out to us.
+          Hvis du har spørsmål om reise, overnatting eller logistikk, ta gjerne kontakt med oss.
         </p>
-        <p className="text-lg mb-4">We can't wait to celebrate with you ❤️</p>
+        <p className="text-lg mb-4">Vi gleder oss til å feire med dere ❤️</p>
         <a href="mailto:trygvesolberg95314@gmail.com" className="btn-secondary inline-flex">
-          Get in touch
+          Ta kontakt
         </a>
       </section>
     </div>

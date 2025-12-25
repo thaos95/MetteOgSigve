@@ -39,13 +39,13 @@ export function DuplicateModal({ existing, onEdit, onCancel, onCreateAnyway }: D
           </svg>
         </div>
         <div className="flex-1">
-          <h4 className="font-serif text-lg text-primary mb-1">Existing RSVP Found</h4>
-          <p className="text-sm text-warm-gray mb-3">We found an RSVP that might be yours:</p>
+          <h4 className="font-serif text-lg text-primary mb-1">Eksisterende svar funnet</h4>
+          <p className="text-sm text-warm-gray mb-3">Vi fant et svar som kan være ditt:</p>
           <div className="bg-white/60 rounded-lg p-3 mb-4">
             <p className="font-medium text-primary">{displayName}</p>
             <p className="text-sm text-warm-gray">{existing.email}</p>
             <div className="mt-2 text-sm">
-              <span className="text-warm-gray">Party:</span>
+              <span className="text-warm-gray">Følge:</span>
               <ul className="ml-4 mt-1 space-y-0.5">
                 <li className="flex items-center gap-2">
                   <span
@@ -64,13 +64,13 @@ export function DuplicateModal({ existing, onEdit, onCancel, onCreateAnyway }: D
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => onEdit(existing)} className="btn-primary text-sm">
-              Edit this RSVP
+              Endre dette svaret
             </button>
             <button type="button" onClick={() => onCancel(existing.id)} className="btn-danger text-sm">
-              Cancel RSVP
+              Slett svar
             </button>
             <button type="button" onClick={onCreateAnyway} className="btn-secondary text-sm">
-              Create new anyway
+              Opprett nytt likevel
             </button>
           </div>
         </div>
