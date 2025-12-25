@@ -1,5 +1,7 @@
 import Image from 'next/image';
 
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+
 export default function Travel() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -79,13 +81,25 @@ export default function Travel() {
             </p>
             
             <div className="bg-cream/50 rounded-lg p-4 border border-soft-border mb-4">
-              <h3 className="font-medium text-primary mb-2">⚠️ Important Practical Information</h3>
+              <h3 className="font-medium text-primary mb-2">Practical Information</h3>
               <ul className="text-warm-gray text-sm space-y-1">
-                <li>• There is <strong>limited parking</strong> near the church</li>
-                <li>• There are <strong>no public restrooms</strong> on site</li>
-                <li>• The church is a short walk from nearby bus stops</li>
-                <li>• We recommend <strong>carpooling</strong> where possible</li>
+                <li>• <strong>Parking</strong> is available around the church</li>
+                <li>• <strong>Restrooms</strong> are available on site during the ceremony</li>
               </ul>
+            </div>
+            
+            {/* Google Maps Embed */}
+            <div className="aspect-video rounded-lg overflow-hidden border border-soft-border mb-4">
+              <iframe
+                src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=Botne+kirke,+Kirkeveien+19,+3085+Holmestrand,Norway&zoom=14`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Botne Church location"
+              />
             </div>
             
             <a 
@@ -173,6 +187,20 @@ export default function Travel() {
                 <li>• The grounds are partially outdoors – we recommend comfortable footwear</li>
                 <li>• The sculpture park is open and free to explore</li>
               </ul>
+            </div>
+            
+            {/* Google Maps Embed */}
+            <div className="aspect-video rounded-lg overflow-hidden border border-soft-border mb-4">
+              <iframe
+                src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=Midtåsen,+Midtåsveien+2A,+3226+Sandefjord,Norway&zoom=14`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Midtåsen venue location"
+              />
             </div>
             
             <a 
@@ -313,7 +341,7 @@ export default function Travel() {
           If you have any questions regarding travel, accommodation, or logistics, feel free to reach out to us.
         </p>
         <p className="text-lg mb-4">We can't wait to celebrate with you ❤️</p>
-        <a href="mailto:contact@example.com" className="btn-secondary inline-flex">
+        <a href="mailto:trygvesolberg95314@gmail.com" className="btn-secondary inline-flex">
           Get in touch
         </a>
       </section>
