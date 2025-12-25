@@ -355,7 +355,7 @@ export default function RSVPForm() {
           <div>
             <label htmlFor="notes" className="block text-sm font-medium text-primary mb-2">
               Melding{" "}
-              <span className="font-normal text-warm-gray">(allergier, sangønsker, etc.)</span>
+              <span className="font-normal text-warm-gray">(allergier, etc.)</span>
             </label>
             <textarea
               id="notes"
