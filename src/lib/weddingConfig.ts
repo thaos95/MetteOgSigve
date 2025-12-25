@@ -17,24 +17,24 @@ export const weddingConfig = {
 
   // Wedding date
   date: {
-    full: 'Friday, 3rd of July 2026',
-    short: '3 July 2026',
+    full: 'Fredag 3. juli 2026',
+    short: '3. juli 2026',
     iso: '2026-07-03',
   },
 
   // Ceremony details
   ceremony: {
-    name: 'Botne Church',
+    name: 'Botne kirke',
     nameNorwegian: 'Botne kirke',
     time: '12:30',
     address: {
       street: 'Kirkeveien 19',
       postalCode: '3085',
       city: 'Holmestrand',
-      country: 'Norway',
+      country: 'Norge',
     },
     mapsUrl: 'https://maps.google.com/?q=Botne+kirke,+Kirkeveien+19,+3085+Holmestrand',
-    description: 'A beautiful medieval stone church from the 13th century',
+    description: 'En vakker middelalderkirke fra 1200-tallet',
   },
 
   // Celebration venue details
@@ -45,10 +45,10 @@ export const weddingConfig = {
       street: 'Midtåsveien 2A',
       postalCode: '3226',
       city: 'Sandefjord',
-      country: 'Norway',
+      country: 'Norge',
     },
     mapsUrl: 'https://maps.google.com/?q=Midtåsen,+Midtåsveien+2A,+3226+Sandefjord',
-    description: 'A historic villa estate overlooking the fjord',
+    description: 'En historisk villa med utsikt over fjorden',
   },
 
   // Website URLs (relative paths, combined with baseUrl in emails)
@@ -64,7 +64,7 @@ export const weddingConfig = {
     // Couple photo for email header (must be publicly accessible)
     // Use a clear, elegant photo that looks good at 600px width
     couplePhoto: '/Mette og Sigve/IMG_8170.jpeg',
-    couplePhotoAlt: 'Sigve and Mette',
+    couplePhotoAlt: 'Sigve og Mette',
   },
 } as const;
 
@@ -77,7 +77,7 @@ export function formatAddress(location: typeof weddingConfig.ceremony | typeof w
 // Helper to get ceremony summary
 export function getCeremonySummary(): string {
   const { ceremony, date } = weddingConfig;
-  return `${date.full} at ${ceremony.time}, ${ceremony.nameNorwegian}`;
+  return `${date.full} kl. ${ceremony.time}, ${ceremony.nameNorwegian}`;
 }
 
 export type WeddingConfig = typeof weddingConfig;

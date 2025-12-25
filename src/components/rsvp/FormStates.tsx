@@ -17,9 +17,9 @@ export function SuccessState({ wasEdit }: SuccessStateProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      <h3 className="font-serif text-2xl text-primary mb-2">Thank you!</h3>
-      <p className="text-warm-gray">Your RSVP has been {wasEdit ? "updated" : "submitted"} successfully.</p>
-      <p className="text-sm text-warm-gray mt-4">We can't wait to celebrate with you.</p>
+      <h3 className="font-serif text-2xl text-primary mb-2">Takk!</h3>
+      <p className="text-warm-gray">Svaret ditt er {wasEdit ? "oppdatert" : "sendt"}.</p>
+      <p className="text-sm text-warm-gray mt-4">Vi gleder oss til å feire med deg.</p>
     </div>
   );
 }
@@ -37,8 +37,8 @@ export function ErrorState() {
           </svg>
         </div>
         <div>
-          <p className="font-medium text-error">Something went wrong</p>
-          <p className="text-sm text-warm-gray">Please try again later or contact us directly.</p>
+          <p className="font-medium text-error">Noe gikk galt</p>
+          <p className="text-sm text-warm-gray">Vennligst prøv igjen senere eller kontakt oss direkte.</p>
         </div>
       </div>
     </div>

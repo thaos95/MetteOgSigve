@@ -92,10 +92,10 @@ function emailLayout(content: string, options: { preheader?: string } = {}): str
                 <tr>
                   <td style="text-align: center;">
                     <p style="margin: 0 0 8px; font-size: 14px; color: ${colors.textMuted};">
-                      Questions? Visit our <a href="${baseUrl}/travel" style="color: ${colors.primary}; text-decoration: underline;">Travel & Info</a> page
+                      Spørsmål? Besøk vår <a href="${baseUrl}/travel" style="color: ${colors.primary}; text-decoration: underline;">Reise & Info</a> side
                     </p>
                     <p style="margin: 0; font-size: 13px; color: ${colors.textMuted};">
-                      With love, ${weddingConfig.couple.emailSignature}
+                      Hilsen, ${weddingConfig.couple.emailSignature}
                     </p>
                   </td>
                 </tr>
@@ -146,14 +146,14 @@ function eventDetailsSection(): string {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="padding-bottom: 8px;">
-                <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: ${colors.accent}; font-weight: 600;">Ceremony</span>
+                <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: ${colors.accent}; font-weight: 600;">Vielse</span>
               </td>
             </tr>
             <tr>
               <td>
                 <p style="margin: 0 0 4px; font-size: 16px; font-weight: 600; color: ${colors.primary};">${ceremony.time} · ${ceremony.nameNorwegian}</p>
                 <p style="margin: 0 0 8px; font-size: 14px; color: ${colors.textMuted};">${formatAddress(ceremony)}</p>
-                <a href="${ceremony.mapsUrl}" style="font-size: 13px; color: ${colors.primary}; text-decoration: underline;">View on Google Maps →</a>
+                <a href="${ceremony.mapsUrl}" style="font-size: 13px; color: ${colors.primary}; text-decoration: underline;">Se på Google Maps →</a>
               </td>
             </tr>
           </table>
@@ -166,14 +166,14 @@ function eventDetailsSection(): string {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="padding-bottom: 8px;">
-                <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: ${colors.accent}; font-weight: 600;">Celebration</span>
+                <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: ${colors.accent}; font-weight: 600;">Feiring</span>
               </td>
             </tr>
             <tr>
               <td>
                 <p style="margin: 0 0 4px; font-size: 16px; font-weight: 600; color: ${colors.primary};">${venue.time} · ${venue.name}</p>
                 <p style="margin: 0 0 8px; font-size: 14px; color: ${colors.textMuted};">${formatAddress(venue)}</p>
-                <a href="${venue.mapsUrl}" style="font-size: 13px; color: ${colors.primary}; text-decoration: underline;">View on Google Maps →</a>
+                <a href="${venue.mapsUrl}" style="font-size: 13px; color: ${colors.primary}; text-decoration: underline;">Se på Google Maps →</a>
               </td>
             </tr>
           </table>
@@ -203,37 +203,37 @@ export function verificationEmail(data: { name: string; verifyLink: string; rsvp
   
   const html = emailLayout(`
     <p style="margin: 0 0 16px; font-size: 16px; color: ${colors.text};">
-      Hi ${name},
+      Hei ${name},
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.text}; line-height: 1.6;">
-      Thank you for your RSVP! Please verify your email address to confirm your response.
+      Takk for ditt svar! Vennligst bekreft e-postadressen din for å fullføre registreringen.
     </p>
     
-    ${ctaButton('Verify My RSVP', verifyLink)}
+    ${ctaButton('Bekreft mitt svar', verifyLink)}
     
     <p style="margin: 24px 0 0; font-size: 13px; color: ${colors.textMuted}; text-align: center;">
-      This link expires in 1 hour. If you didn't submit this RSVP, you can safely ignore this email.
+      Denne lenken utløper om 1 time. Hvis du ikke sendte dette svaret, kan du trygt ignorere denne e-posten.
     </p>
     
     <!-- RSVP Summary -->
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0 0; border-top: 1px solid ${colors.border}; padding-top: 24px;">
       <tr>
         <td>
-          <p style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: ${colors.primary};">Your RSVP Summary</p>
+          <p style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: ${colors.primary};">Oppsummering av ditt svar</p>
           <table role="presentation" cellpadding="0" cellspacing="0" style="font-size: 14px; color: ${colors.text};">
             <tr>
-              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Response:</td>
-              <td style="padding: 4px 0; font-weight: 500;">${rsvpSummary.attending ? '✓ Attending' : '✗ Unable to attend'}</td>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Svar:</td>
+              <td style="padding: 4px 0; font-weight: 500;">${rsvpSummary.attending ? '✓ Kommer' : '✗ Kan ikke komme'}</td>
             </tr>
             ${rsvpSummary.attending && rsvpSummary.guestList ? `
             <tr>
-              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Guests:</td>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Gjester:</td>
               <td style="padding: 4px 0;">${rsvpSummary.guestList}</td>
             </tr>` : ''}
             ${rsvpSummary.notes ? `
             <tr>
-              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted}; vertical-align: top;">Notes:</td>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted}; vertical-align: top;">Melding:</td>
               <td style="padding: 4px 0;">${rsvpSummary.notes}</td>
             </tr>` : ''}
           </table>
@@ -248,60 +248,60 @@ export function verificationEmail(data: { name: string; verifyLink: string; rsvp
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
       <tr>
         <td>
-          <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: ${colors.primary};">Practical Information</p>
+          <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: ${colors.primary};">Praktisk informasjon</p>
           <ul style="margin: 0; padding: 0 0 0 20px; font-size: 14px; color: ${colors.text}; line-height: 1.8;">
-            <li>Please arrive at the church by 12:15</li>
-            <li>The venue is about 45 min drive from the church</li>
-            <li>Parking is available at both locations</li>
+            <li>Vennligst møt opp ved kirken senest kl. 12:15</li>
+            <li>Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet</li>
+            <li>Parkering er tilgjengelig på begge steder</li>
           </ul>
           <p style="margin: 12px 0 0;">
-            <a href="${baseUrl}/travel" style="font-size: 14px; color: ${colors.primary}; text-decoration: underline;">View all travel & accommodation info →</a>
+            <a href="${baseUrl}/travel" style="font-size: 14px; color: ${colors.primary}; text-decoration: underline;">Se all informasjon om reise og overnatting →</a>
           </p>
         </td>
       </tr>
     </table>
-  `, { preheader: `Thanks for your RSVP! Please verify your email to confirm.` });
+  `, { preheader: `Takk for ditt svar! Vennligst bekreft e-posten din.` });
   
-  const text = `Hi ${name},
+  const text = `Hei ${name},
 
-Thank you for your RSVP! Please verify your email address by visiting:
+Takk for ditt svar! Vennligst bekreft e-postadressen din ved å besøke:
 ${verifyLink}
 
-This link expires in 1 hour.
+Denne lenken utløper om 1 time.
 
-YOUR RSVP SUMMARY
+OPPSUMMERING AV DITT SVAR
 -----------------
-Response: ${rsvpSummary.attending ? 'Attending' : 'Unable to attend'}
-${rsvpSummary.attending && rsvpSummary.guestList ? `Guests: ${rsvpSummary.guestList}` : ''}
-${rsvpSummary.notes ? `Notes: ${rsvpSummary.notes}` : ''}
+Svar: ${rsvpSummary.attending ? 'Kommer' : 'Kan ikke komme'}
+${rsvpSummary.attending && rsvpSummary.guestList ? `Gjester: ${rsvpSummary.guestList}` : ''}
+${rsvpSummary.notes ? `Melding: ${rsvpSummary.notes}` : ''}
 
-THE WEDDING
+BRYLLUPET
 -----------
 ${weddingConfig.date.full}
 
-Ceremony at ${weddingConfig.ceremony.time}
+Vielse kl. ${weddingConfig.ceremony.time}
 ${weddingConfig.ceremony.nameNorwegian}
 ${formatAddress(weddingConfig.ceremony)}
-Maps: ${weddingConfig.ceremony.mapsUrl}
+Kart: ${weddingConfig.ceremony.mapsUrl}
 
-Celebration from ${weddingConfig.venue.time}
+Feiring fra kl. ${weddingConfig.venue.time}
 ${weddingConfig.venue.name}
 ${formatAddress(weddingConfig.venue)}
-Maps: ${weddingConfig.venue.mapsUrl}
+Kart: ${weddingConfig.venue.mapsUrl}
 
-PRACTICAL INFO
+PRAKTISK INFO
 --------------
-• Please arrive at the church by 12:15
-• The venue is about 45 min drive from the church
-• Parking is available at both locations
+• Vennligst møt opp ved kirken senest kl. 12:15
+• Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet
+• Parkering er tilgjengelig på begge steder
 
-More info: ${baseUrl}/travel
+Mer info: ${baseUrl}/travel
 
-With love,
+Hilsen,
 ${weddingConfig.couple.emailSignature}`;
 
   return {
-    subject: `${weddingConfig.email.subjectPrefix} — Please verify your RSVP`,
+    subject: `${weddingConfig.email.subjectPrefix} — Vennligst bekreft ditt svar`,
     html,
     text,
   };
@@ -313,38 +313,38 @@ ${weddingConfig.couple.emailSignature}`;
  */
 export function tokenEmail(data: { name: string; link: string; purpose: 'edit' | 'cancel' }) {
   const { name, link, purpose } = data;
-  const actionText = purpose === 'cancel' ? 'cancel' : 'edit';
-  const buttonText = purpose === 'cancel' ? 'Cancel My RSVP' : 'Edit My RSVP';
+  const actionText = purpose === 'cancel' ? 'slette' : 'endre';
+  const buttonText = purpose === 'cancel' ? 'Slett mitt svar' : 'Endre mitt svar';
   
   const html = emailLayout(`
     <p style="margin: 0 0 16px; font-size: 16px; color: ${colors.text};">
-      Hi ${name},
+      Hei ${name},
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.text}; line-height: 1.6;">
-      You requested a secure link to ${actionText} your RSVP. Click the button below to continue.
+      Du ba om en sikker lenke for å ${actionText} svaret ditt. Klikk på knappen nedenfor for å fortsette.
     </p>
     
     ${ctaButton(buttonText, link)}
     
     <p style="margin: 24px 0 0; font-size: 13px; color: ${colors.textMuted}; text-align: center;">
-      This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
+      Denne lenken utløper om 1 time. Hvis du ikke ba om dette, kan du trygt ignorere denne e-posten.
     </p>
-  `, { preheader: `Your secure link to ${actionText} your RSVP` });
+  `, { preheader: `Din sikre lenke for å ${actionText} svaret ditt` });
   
-  const text = `Hi ${name},
+  const text = `Hei ${name},
 
-You requested a secure link to ${actionText} your RSVP.
+Du ba om en sikker lenke for å ${actionText} svaret ditt.
 
 ${buttonText}: ${link}
 
-This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
+Denne lenken utløper om 1 time. Hvis du ikke ba om dette, kan du trygt ignorere denne e-posten.
 
-With love,
+Hilsen,
 ${weddingConfig.couple.emailSignature}`;
 
   return {
-    subject: `${weddingConfig.email.subjectPrefix} — Your RSVP ${actionText} link`,
+    subject: `${weddingConfig.email.subjectPrefix} — Lenke for å ${actionText} svar`,
     html,
     text,
   };
@@ -360,11 +360,11 @@ export function updateConfirmationEmail(data: { name: string; rsvpSummary: RsvpD
   
   const html = emailLayout(`
     <p style="margin: 0 0 16px; font-size: 16px; color: ${colors.text};">
-      Hi ${name},
+      Hei ${name},
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.text}; line-height: 1.6;">
-      Your RSVP has been updated successfully. Here's your updated response:
+      Svaret ditt er oppdatert. Her er din oppdaterte status:
     </p>
     
     <!-- RSVP Summary -->
@@ -373,17 +373,17 @@ export function updateConfirmationEmail(data: { name: string; rsvpSummary: RsvpD
         <td>
           <table role="presentation" cellpadding="0" cellspacing="0" style="font-size: 14px; color: ${colors.text};">
             <tr>
-              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Response:</td>
-              <td style="padding: 4px 0; font-weight: 500;">${rsvpSummary.attending ? '✓ Attending' : '✗ Unable to attend'}</td>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Svar:</td>
+              <td style="padding: 4px 0; font-weight: 500;">${rsvpSummary.attending ? '✓ Kommer' : '✗ Kan ikke komme'}</td>
             </tr>
             ${rsvpSummary.attending && rsvpSummary.guestList ? `
             <tr>
-              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Guests:</td>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Gjester:</td>
               <td style="padding: 4px 0;">${rsvpSummary.guestList}</td>
             </tr>` : ''}
             ${rsvpSummary.notes ? `
             <tr>
-              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted}; vertical-align: top;">Notes:</td>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted}; vertical-align: top;">Melding:</td>
               <td style="padding: 4px 0;">${rsvpSummary.notes}</td>
             </tr>` : ''}
           </table>
@@ -392,27 +392,27 @@ export function updateConfirmationEmail(data: { name: string; rsvpSummary: RsvpD
     </table>
     
     <p style="margin: 24px 0 0; font-size: 14px; color: ${colors.textMuted};">
-      Need to make another change? You can request a new edit link from the <a href="${baseUrl}/rsvp" style="color: ${colors.primary}; text-decoration: underline;">RSVP page</a>.
+      Trenger du å gjøre flere endringer? Du kan be om en ny endringslenke fra <a href="${baseUrl}/rsvp" style="color: ${colors.primary}; text-decoration: underline;">svarsiden</a>.
     </p>
-  `, { preheader: `Your RSVP has been updated successfully.` });
+  `, { preheader: `Svaret ditt er oppdatert.` });
   
-  const text = `Hi ${name},
+  const text = `Hei ${name},
 
-Your RSVP has been updated successfully.
+Svaret ditt er oppdatert.
 
-YOUR UPDATED RSVP
+DITT OPPDATERTE SVAR
 -----------------
-Response: ${rsvpSummary.attending ? 'Attending' : 'Unable to attend'}
-${rsvpSummary.attending && rsvpSummary.guestList ? `Guests: ${rsvpSummary.guestList}` : ''}
-${rsvpSummary.notes ? `Notes: ${rsvpSummary.notes}` : ''}
+Svar: ${rsvpSummary.attending ? 'Kommer' : 'Kan ikke komme'}
+${rsvpSummary.attending && rsvpSummary.guestList ? `Gjester: ${rsvpSummary.guestList}` : ''}
+${rsvpSummary.notes ? `Melding: ${rsvpSummary.notes}` : ''}
 
-Need to make another change? Visit: ${baseUrl}/rsvp
+Trenger du å gjøre flere endringer? Besøk: ${baseUrl}/rsvp
 
-With love,
+Hilsen,
 ${weddingConfig.couple.emailSignature}`;
 
   return {
-    subject: `${weddingConfig.email.subjectPrefix} — RSVP updated`,
+    subject: `${weddingConfig.email.subjectPrefix} — Svar oppdatert`,
     html,
     text,
   };
@@ -428,30 +428,30 @@ export function cancelConfirmationEmail(data: { name: string }) {
   
   const html = emailLayout(`
     <p style="margin: 0 0 16px; font-size: 16px; color: ${colors.text};">
-      Hi ${name},
+      Hei ${name},
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.text}; line-height: 1.6;">
-      Your RSVP has been cancelled. We're sorry you won't be able to join us, but we understand and appreciate you letting us know.
+      Svaret ditt er slettet. Det var synd at du ikke kunne komme, men takk for at du ga beskjed.
     </p>
     
     <p style="margin: 0; font-size: 14px; color: ${colors.textMuted};">
-      If your plans change, you can always submit a new RSVP at <a href="${baseUrl}/rsvp" style="color: ${colors.primary}; text-decoration: underline;">${baseUrl}/rsvp</a>
+      Hvis planene endrer seg, kan du alltid sende et nytt svar på <a href="${baseUrl}/rsvp" style="color: ${colors.primary}; text-decoration: underline;">${baseUrl}/rsvp</a>
     </p>
-  `, { preheader: `Your RSVP has been cancelled.` });
+  `, { preheader: `Svaret ditt er slettet.` });
   
-  const text = `Hi ${name},
+  const text = `Hei ${name},
 
-Your RSVP has been cancelled. We're sorry you won't be able to join us, but we understand and appreciate you letting us know.
+Svaret ditt er slettet. Det var synd at du ikke kunne komme, men takk for at du ga beskjed.
 
-If your plans change, you can always submit a new RSVP at:
+Hvis planene endrer seg, kan du alltid sende et nytt svar på:
 ${baseUrl}/rsvp
 
-With love,
+Hilsen,
 ${weddingConfig.couple.emailSignature}`;
 
   return {
-    subject: `${weddingConfig.email.subjectPrefix} — RSVP cancelled`,
+    subject: `${weddingConfig.email.subjectPrefix} — Svar slettet`,
     html,
     text,
   };

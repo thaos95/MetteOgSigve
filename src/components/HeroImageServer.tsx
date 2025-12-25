@@ -24,7 +24,7 @@ export default async function HeroImageServer() {
     <div className="relative w-full h-[60vh] sm:h-[70vh] overflow-hidden">
       <Image 
         src={`/Mette og Sigve/${first}`} 
-        alt="Mette and Sigve" 
+        alt="Mette og Sigve" 
         fill
         sizes="100vw"
         className="object-cover"

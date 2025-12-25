@@ -24,7 +24,7 @@ export function TokenManagement({
 
   async function requestToken() {
     if (!email && !sendToEmail) {
-      alert("Please enter your email first or specify an email to send to");
+      alert("Vennligst skriv inn e-posten din først eller spesifiser en e-post å sende til");
       return;
     }
     const recaptchaToken = await getRecaptchaToken("request-token");
@@ -49,35 +49,35 @@ export function TokenManagement({
     const d = await res.json().catch(() => ({}));
     if (res.ok) {
       if (d?.devToken) {
-        alert("Development token: " + d.devToken);
+        alert("Utviklertoken: " + d.devToken);
         onTokenChange(d.devToken);
       } else {
-        alert("A secure link was sent to the target email (if it exists in our records).");
+        alert("En sikker lenke er sendt til e-posten (hvis den finnes i våre registre).");
       }
     } else {
-      alert(d.error ?? "Failed");
+      alert(d.error ?? "Feilet");
     }
   }
 
   async function verifyToken() {
     if (!pastedToken) {
-      alert("Paste a token first");
+      alert("Lim inn en token først");
       return;
     }
     try {
       const res = await fetch(`/api/rsvp/verify-token?token=${encodeURIComponent(pastedToken)}`);
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        alert(d.error ?? "Invalid token");
+        alert(d.error ?? "Ugyldig token");
         return;
       }
       const data = await res.json();
       if (data?.ok && data.rsvp) {
         onTokenApplied(data.rsvp);
-        alert("Token applied — you can now update your RSVP");
+        alert("Token lagt til — du kan nå oppdatere svaret ditt");
       }
     } catch {
-      alert("Failed to verify token");
+      alert("Kunne ikke verifisere token");
     }
   }
 
@@ -98,10 +98,10 @@ export function TokenManagement({
     });
     const d = await res.json();
     if (res.ok && d?.token) {
-      alert("Generated test token: " + d.token);
+      alert("Generert testtoken: " + d.token);
       onTokenChange(d.token);
     } else {
-      alert(d.error ?? "Failed to generate test token");
+      alert(d.error ?? "Kunne ikke generere testtoken");
     }
   }
 
@@ -116,22 +116,21 @@ export function TokenManagement({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        Need to edit or cancel an existing RSVP?
+        Trenger du å endre eller kansellere et eksisterende svar?
       </summary>
       <div className="mt-4 p-4 bg-cream/30 border border-soft-border rounded-lg space-y-4">
         <p className="text-sm text-warm-gray">
-          Enter your email to receive a secure edit/cancel link. You can optionally specify a different
-          address to send the link to.
+          Skriv inn e-posten din for å motta en sikker endrings-/slettelenke. Du kan valgfritt spesifisere en annen adresse å sende lenken til.
         </p>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2 items-end">
             <div className="flex-1 min-w-[200px]">
               <label htmlFor="send-to-email" className="block text-sm font-medium text-primary mb-1">
-                Send link to email
+                Send lenke til e-post
               </label>
               <input
                 id="send-to-email"
-                placeholder="email@example.com"
+                placeholder="epost@eksempel.no"
                 value={sendToEmail}
                 onChange={(e) => setSendToEmail(e.target.value)}
                 className="input"
@@ -146,16 +145,16 @@ export function TokenManagement({
                 onChange={(e) => setUpdateEmail(e.target.checked)}
                 className="w-4 h-4 accent-primary"
               />
-              <span className="text-sm text-warm-gray">Update RSVP email</span>
+              <span className="text-sm text-warm-gray">Oppdater svar-epost</span>
             </label>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={requestToken} className="btn-primary text-sm">
-              Request edit/cancel link
+              Be om endrings-/slettelenke
             </button>
             {process.env.NODE_ENV !== "production" && (
               <button type="button" onClick={generateTestToken} className="btn-secondary text-sm">
-                Generate test token (dev)
+                Generer testtoken (dev)
               </button>
             )}
           </div>
@@ -163,18 +162,18 @@ export function TokenManagement({
 
         <div className="pt-3 border-t border-soft-border">
           <label htmlFor="paste-token" className="block text-sm font-medium text-primary mb-1">
-            Or paste your token directly
+            Eller lim inn token direkte
           </label>
           <div className="flex flex-wrap gap-2">
             <input
               id="paste-token"
               value={pastedToken}
               onChange={(e) => onTokenChange(e.target.value)}
-              placeholder="Paste token here"
+              placeholder="Lim inn token her"
               className="input flex-1 min-w-[200px]"
             />
             <button type="button" onClick={verifyToken} className="btn-secondary text-sm">
-              Use token
+              Bruk token
             </button>
           </div>
         </div>

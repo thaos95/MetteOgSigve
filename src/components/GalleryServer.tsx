@@ -19,7 +19,7 @@ export default async function GalleryServer({ limit = 12 }: Props) {
   if (imageFiles.length === 0) {
     return (
       <div className="text-center py-12 text-warm-gray">
-        <p>No images found. Add photos to /public/Mette og Sigve to display the gallery.</p>
+        <p>Ingen bilder funnet. Legg til bilder i /public/Mette og Sigve for å vise galleriet.</p>
       </div>
     );
   }
@@ -33,7 +33,7 @@ export default async function GalleryServer({ limit = 12 }: Props) {
         >
           <Image 
             src={`/Mette og Sigve/${file}`} 
-            alt={`Gallery photo ${index + 1}`} 
+            alt={`Galleribilde ${index + 1}`} 
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
