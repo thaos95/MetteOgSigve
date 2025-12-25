@@ -13,6 +13,10 @@ export default defineConfig({
     url: process.env.BASE_URL || 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 120 * 1000,
+    // Skip email sending during E2E tests to preserve Gmail rate limits
+    env: {
+      SKIP_EMAIL_SEND: 'true',
+    },
   },
   use: {
     headless: true,

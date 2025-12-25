@@ -6,6 +6,7 @@ import { personMatches, checkForDuplicates, extractPeopleFromRsvp } from "../../
 import { AppError, errorResponse, zodToAppError, handleUnknownError, legacyErrorResponse } from "../../../lib/errors";
 import { applyRsvpRateLimits } from '../../../lib/rateLimit';
 import { verifyRecaptchaToken } from '../../../lib/recaptcha';
+import { verificationEmail, type RsvpData } from '../../../lib/emailTemplates';
 import type { ZodError } from 'zod';
 
 export async function POST(req: Request) {
@@ -155,20 +156,35 @@ export async function POST(req: Request) {
         const sendMail = mod?.sendMail;
         const getBaseUrl = mod?.getBaseUrl;
         const link = `${getBaseUrl?.() ?? ''}/rsvp?token=${token}`;
-        const guestList = (Array.isArray(party) && party.length > 0) ? party.map((p:any)=>`${p.firstName||p.first_name||''} ${p.lastName||p.last_name||''}`.trim()).filter(Boolean).join(', ') : 'None';
-        const html = `<p>Hi ${fullName},</p>
-          <p>Thanks — your RSVP has been recorded. Please <a href="${link}">verify your email</a> to confirm. This link expires in 1 hour.</p>
-          <ul>
-            <li><strong>Attending:</strong> ${attending ? 'Yes' : 'No'}</li>
-            <li><strong>Guests:</strong> ${guestList}</li>
-            <li><strong>Notes:</strong> ${notes ?? ''}</li>
-          </ul>
-          <p>If you want to edit or cancel you can use the request token flow once verified.</p>
-          <p>See you soon — Mette & Sigve</p>`;
+        
+        // Build RSVP summary for email template
+        const guestList = (Array.isArray(party) && party.length > 0) 
+          ? party.map((p:any)=>`${p.firstName||p.first_name||''} ${p.lastName||p.last_name||''}`.trim()).filter(Boolean).join(', ') 
+          : '';
+        
+        const rsvpSummary: RsvpData = {
+          name: fullName,
+          attending: attending,
+          guestList,
+          notes: notes ?? undefined,
+        };
+        
+        // Generate email using template
+        const emailContent = verificationEmail({
+          name: firstName,
+          verifyLink: link,
+          rsvpSummary,
+        });
+        
         if (typeof sendMail === 'function') {
           // Do not block the request on email delivery; send asynchronously
           const sendAsync = mod?.sendMailAsync ?? ((o: any) => sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed (sync fallback)', res); }).catch(e => console.error('Mail send error (sync fallback)', e)));
-          sendAsync({ to: email, subject: 'Mette & Sigve — Verify your RSVP', text: `Please verify your RSVP: ${link}`, html });
+          sendAsync({ 
+            to: email, 
+            subject: emailContent.subject, 
+            text: emailContent.text, 
+            html: emailContent.html 
+          });
         } else {
           console.warn('sendMail not available; skipping email send in this environment');
         }

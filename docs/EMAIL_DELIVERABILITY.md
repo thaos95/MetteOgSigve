@@ -47,6 +47,30 @@ FEATURE_BCC_SELF=true  # BCC FROM_EMAIL for debugging
 
 ---
 
+## Testing Without Sending Emails
+
+E2E tests trigger ~10 emails per run. Running tests frequently can exhaust Gmail's 500/day limit.
+
+**Solution:** Test runners automatically set `SKIP_EMAIL_SEND=true`:
+
+| Command | Emails Sent? | Config |
+|---------|--------------|--------|
+| `npm run dev` | ✅ Yes | Manual testing with real SMTP |
+| `npm run test:e2e` | ❌ No | `playwright.config.ts` sets SKIP_EMAIL_SEND |
+| `npm run test:unit` | ❌ No | `vitest.config.ts` sets SKIP_EMAIL_SEND |
+
+When `SKIP_EMAIL_SEND=true`:
+- Email functions return success without making SMTP calls
+- Token generation and DB operations still work normally
+- Console logs show `[mail] SKIP_EMAIL_SEND=true, skipping actual send`
+
+**To temporarily skip emails during manual dev:**
+```bash
+SKIP_EMAIL_SEND=true npm run dev
+```
+
+---
+
 ## Deliverability Improvements (Implemented)
 
 ### 1. Connection Timeouts ✅
@@ -114,18 +138,22 @@ Start with `p=none` to monitor, then move to `p=quarantine` or `p=reject`.
 | Issue | Impact | Mitigation |
 |-------|--------|------------|
 | Domain mismatch | DKIM/SPF alignment fails | Use Google Workspace or switch to SendGrid |
-| Daily sending limit | ~500/day (consumer), ~2000/day (Workspace) | Use SendGrid for higher volume |
+| Daily sending limit | ~500/day (consumer), ~2000/day (Workspace) | Set `SKIP_EMAIL_SEND=true` for testing |
 | App passwords required | No OAuth in server context | Generate at myaccount.google.com/apppasswords |
 | No custom DKIM | Can't sign with your domain | Use SendGrid for custom domain signing |
 
-### Recommendation for Production
+### Note on SendGrid
 
-**For best deliverability**, use SendGrid or another transactional email provider:
+SendGrid's free tier is only available for **60 days**. For a wedding site that needs to run for ~1 year, **Gmail SMTP is the recommended option** despite its limitations:
 
-1. Register at sendgrid.com
-2. Add your sending domain
-3. Configure domain authentication (DKIM, SPF)
-4. Get API key and set `SENDGRID_API_KEY`
+- Gmail's 500 emails/day limit is plenty for wedding RSVPs
+- No ongoing costs after the free trial period
+- Set `SKIP_EMAIL_SEND=true` during E2E tests to avoid hitting rate limits
+
+Only consider SendGrid if:
+- You're sending to many non-Gmail recipients (deliverability to other providers is worse with Gmail)
+- You need custom domain DKIM signing
+- You're willing to pay after the 60-day trial
 
 ---
 

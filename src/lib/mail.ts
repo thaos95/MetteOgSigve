@@ -72,6 +72,9 @@ export function getBaseUrl(): string {
 /**
  * Send an email with retry logic for transient failures.
  * Returns structured result for proper error handling.
+ * 
+ * Set SKIP_EMAIL_SEND=true in .env.local to skip actual SMTP/SendGrid calls
+ * during E2E tests (emails still "succeed" but aren't sent).
  */
 export async function sendMail(opts: SendOptions): Promise<SendResult> {
   const maxRetries = 3;
@@ -84,6 +87,13 @@ export async function sendMail(opts: SendOptions): Promise<SendResult> {
 
   if (!fromEmail) {
     return { ok: false, error: 'FROM_EMAIL not configured' };
+  }
+
+  // Skip actual email sending in test mode to preserve Gmail rate limits
+  // Token generation and DB operations still happen, just no SMTP call
+  if (process.env.SKIP_EMAIL_SEND === 'true') {
+    console.log('[mail] SKIP_EMAIL_SEND=true, skipping actual send:', { subject: opts.subject, hasRecipient: !!opts.to });
+    return { ok: true, messageId: 'skipped-test-mode', provider: 'smtp' };
   }
 
   // Ensure we have both text and HTML for best deliverability

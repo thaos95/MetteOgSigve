@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
 import { verifyRecaptchaToken } from '../../../../lib/recaptcha';
 import { slidingWindowLimit } from '../../../../lib/rateLimit';
+import { verificationEmail, type RsvpData } from '../../../../lib/emailTemplates';
 import crypto from 'crypto';
 
 const now = () => new Date().toISOString();
@@ -86,13 +87,32 @@ export async function POST(req: Request) {
       const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed', res); }).catch(e => console.error('Mail send error', e)) : null);
       const getBaseUrl = mod?.getBaseUrl;
       const link = `${getBaseUrl?.() ?? ''}/rsvp?token=${token}`;
-      const html = `<p>Hi ${rsv.name},</p>
-        <p>Click the link below to verify your RSVP email. This link expires in 1 hour.</p>
-        <p><a href="${link}">Verify my RSVP</a></p>
-        <p>If you didn't request this, you can safely ignore this email.</p>
-        <p>See you soon — Mette & Sigve</p>`;
+      
+      // Build RSVP summary for template
+      const guestList = (Array.isArray(rsv.party) && rsv.party.length > 0) 
+        ? rsv.party.map((p:any)=>`${p.firstName||p.first_name||''} ${p.lastName||p.last_name||''}`.trim()).filter(Boolean).join(', ') 
+        : '';
+      
+      const rsvpSummary: RsvpData = {
+        name: rsv.name,
+        attending: rsv.attending ?? true,
+        guestList,
+        notes: rsv.notes,
+      };
+      
+      const emailContent = verificationEmail({
+        name: rsv.first_name || rsv.name?.split(' ')[0] || 'there',
+        verifyLink: link,
+        rsvpSummary,
+      });
+      
       if (typeof sendAsync === 'function') {
-        sendAsync({ to: email, subject: 'Mette & Sigve — Verify your RSVP', text: `Verify your RSVP: ${link}`, html });
+        sendAsync({ 
+          to: email, 
+          subject: emailContent.subject, 
+          text: emailContent.text, 
+          html: emailContent.html 
+        });
         log('Sent verification email to', email, 'for rsvp_id', rsv.id);
       } else {
         console.warn('Mail helper not available');

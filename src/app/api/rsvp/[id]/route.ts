@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
+import { updateConfirmationEmail, cancelConfirmationEmail, type RsvpData } from '../../../../lib/emailTemplates';
 
 export async function PUT(req: Request, ctx: any) {
   try {
@@ -76,7 +77,30 @@ export async function PUT(req: Request, ctx: any) {
         const mod = await import('../../../../lib/mail');
         const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed (sync fallback)', res); }).catch(e => console.error('Mail send error (sync fallback)', e)) : null);
         if (typeof sendAsync === 'function') {
-          sendAsync({ to: email, subject: 'Mette & Sigve — RSVP updated', text: `Your RSVP was updated.` });
+          // Build RSVP summary for email template
+          const updatedData = data?.[0];
+          const guestList = (Array.isArray(updatedData?.party) && updatedData.party.length > 0) 
+            ? updatedData.party.map((p:any)=>`${p.firstName||p.first_name||''} ${p.lastName||p.last_name||''}`.trim()).filter(Boolean).join(', ') 
+            : '';
+          
+          const rsvpSummary: RsvpData = {
+            name: updatedData?.name || `${firstName} ${lastName}`,
+            attending: updatedData?.attending ?? attending ?? true,
+            guestList,
+            notes: updatedData?.notes ?? notes,
+          };
+          
+          const emailContent = updateConfirmationEmail({
+            name: firstName || updatedData?.first_name || updatedData?.name?.split(' ')[0] || 'there',
+            rsvpSummary,
+          });
+          
+          sendAsync({ 
+            to: email, 
+            subject: emailContent.subject, 
+            text: emailContent.text, 
+            html: emailContent.html 
+          });
         } else {
           console.warn('Mail helper not available; skipping update email');
         }
@@ -143,8 +167,21 @@ export async function DELETE(req: Request, ctx: any) {
     // send cancellation email if possible
     try {
       if (row.email) {
-        const { sendMail } = await import('../../../../lib/mail');
-        await sendMail({ to: row.email, subject: 'Mette & Sigve — RSVP cancelled', text: `Your RSVP for ${row.name} was cancelled.` });
+        const mod = await import('../../../../lib/mail');
+        const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed', res); }).catch(e => console.error('Mail send error', e)) : null);
+        
+        if (typeof sendAsync === 'function') {
+          const emailContent = cancelConfirmationEmail({
+            name: row.first_name || row.name?.split(' ')[0] || 'there',
+          });
+          
+          sendAsync({ 
+            to: row.email, 
+            subject: emailContent.subject, 
+            text: emailContent.text, 
+            html: emailContent.html 
+          });
+        }
       }
     } catch (e) { console.error(e); }
 
