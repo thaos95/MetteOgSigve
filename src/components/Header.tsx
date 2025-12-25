@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Header() {
   const links = [
     { href: "/", label: "Hjem" },
-    { href: "/rsvp", label: "RSVP" },
+    { href: "/rsvp", label: "Invitasjon" },
     { href: "/gallery", label: "Galleri" },
     { href: "/travel", label: "Reise & Info" },
   ];
