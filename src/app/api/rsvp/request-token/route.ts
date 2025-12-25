@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../lib/supabaseServer';
 import { verifyRecaptchaToken } from '../../../../lib/recaptcha';
 import { isRateLimited, slidingWindowLimit } from '../../../../lib/rateLimit';
+import { tokenEmail } from '../../../../lib/emailTemplates';
 import crypto from 'crypto';
 const now = ()=>new Date().toISOString();
 const log = (...args: any[])=>console.log('[request-token]', now(), ...args);
@@ -117,9 +118,21 @@ export async function POST(req: Request) {
       const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed (sync fallback)', res); }).catch(e => console.error('Mail send error (sync fallback)', e)) : null);
       const getBaseUrl = mod?.getBaseUrl;
       const link = `${getBaseUrl?.() ?? ''}/rsvp?token=${token}`;
-      const html = `<p>Hi ${rsv.name},</p><p>Use the secure link below to ${purpose === 'cancel' ? 'cancel' : 'edit'} your RSVP. The link expires in 1 hour.</p><p><a href="${link}">Open RSVP</a></p>`;
+      
+      // Generate email using template
+      const emailContent = tokenEmail({
+        name: rsv.first_name || rsv.name?.split(' ')[0] || 'there',
+        link,
+        purpose: purpose === 'cancel' ? 'cancel' : 'edit',
+      });
+      
       if (typeof sendAsync === 'function') {
-        sendAsync({ to: sendTo ?? rsv.email ?? rsv.email, subject: 'Mette & Sigve — RSVP secure link', text: `Open your RSVP: ${link}`, html });
+        sendAsync({ 
+          to: sendTo ?? rsv.email, 
+          subject: emailContent.subject, 
+          text: emailContent.text, 
+          html: emailContent.html 
+        });
         log('Triggered async token email for rsvp_id', rsv.id, 'to', sendTo ?? rsv.email);
       } else {
         console.warn('Mail helper not available; skipping send');

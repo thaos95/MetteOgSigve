@@ -71,9 +71,12 @@ describe('mail module', () => {
 
   describe('sendMail', () => {
     it('sends email with both text and HTML', async () => {
+      // Disable test-mode skip to test actual send path
+      delete process.env.SKIP_EMAIL_SEND;
       mockSendMail.mockResolvedValueOnce({ messageId: 'test-id' });
 
       // Dynamic import to get fresh module with mocks
+      vi.resetModules();
       const { sendMail } = await import('../mail');
       
       const result = await sendMail({
@@ -94,8 +97,11 @@ describe('mail module', () => {
     });
 
     it('includes replyTo header', async () => {
+      // Disable test-mode skip to test actual send path
+      delete process.env.SKIP_EMAIL_SEND;
       mockSendMail.mockResolvedValueOnce({ messageId: 'test-id' });
       
+      vi.resetModules();
       const { sendMail } = await import('../mail');
       
       await sendMail({
@@ -126,7 +132,31 @@ describe('mail module', () => {
       expect(result.error).toContain('FROM_EMAIL');
     });
 
+    it('skips actual send when SKIP_EMAIL_SEND=true', async () => {
+      process.env.SKIP_EMAIL_SEND = 'true';
+      process.env.FROM_EMAIL = 'test@example.com';
+      
+      vi.resetModules();
+      const { sendMail } = await import('../mail');
+      
+      const result = await sendMail({
+        to: 'recipient@example.com',
+        subject: 'Test',
+        text: 'Hello',
+      });
+
+      expect(result.ok).toBe(true);
+      expect(result.messageId).toBe('skipped-test-mode');
+      // Should NOT call the actual transport
+      expect(mockSendMail).not.toHaveBeenCalled();
+      
+      // Clean up
+      delete process.env.SKIP_EMAIL_SEND;
+    });
+
     it('retries on transient errors', async () => {
+      // Disable test-mode skip to test actual retry behavior
+      delete process.env.SKIP_EMAIL_SEND;
       const transientError = new Error('Connection timeout');
       mockSendMail
         .mockRejectedValueOnce(transientError)
@@ -147,6 +177,8 @@ describe('mail module', () => {
     });
 
     it('does not retry on permanent errors', async () => {
+      // Disable test-mode skip to test actual retry behavior
+      delete process.env.SKIP_EMAIL_SEND;
       const permanentError = new Error('Invalid recipient');
       mockSendMail.mockRejectedValueOnce(permanentError);
 
@@ -168,8 +200,12 @@ describe('mail module', () => {
 
   describe('email content generation', () => {
     it('generates text from HTML when text not provided', async () => {
+      // Disable test-mode skip to test content generation
+      delete process.env.SKIP_EMAIL_SEND;
       mockSendMail.mockResolvedValueOnce({ messageId: 'test-id' });
       
+      vi.resetModules();
+      process.env.FROM_EMAIL = 'test@example.com';
       const { sendMail } = await import('../mail');
       
       await sendMail({
@@ -185,8 +221,12 @@ describe('mail module', () => {
     });
 
     it('wraps text in HTML when html not provided', async () => {
+      // Disable test-mode skip to test content generation
+      delete process.env.SKIP_EMAIL_SEND;
       mockSendMail.mockResolvedValueOnce({ messageId: 'test-id' });
       
+      vi.resetModules();
+      process.env.FROM_EMAIL = 'test@example.com';
       const { sendMail } = await import('../mail');
       
       await sendMail({
