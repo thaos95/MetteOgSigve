@@ -2,14 +2,14 @@ import Link from "next/link";
 
 export default function Header() {
   const links = [
-    { href: "/", label: "Home" },
+    { href: "/", label: "Hjem" },
     { href: "/rsvp", label: "RSVP" },
-    { href: "/gallery", label: "Gallery" },
-    { href: "/travel", label: "Travel" },
+    { href: "/gallery", label: "Galleri" },
+    { href: "/travel", label: "Reise & Info" },
   ];
 
   return (
-    <nav className="flex flex-wrap gap-1 sm:gap-2" aria-label="Main navigation">
+    <nav className="flex flex-wrap gap-1 sm:gap-2" aria-label="Hovedmeny">
       {links.map(({ href, label }) => (
         <Link
           key={href}

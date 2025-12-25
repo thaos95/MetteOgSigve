@@ -16,22 +16,22 @@ export interface PartyListProps {
 export function PartyList({ party, onUpdate, onRemove, onAdd, onSetAll }: PartyListProps) {
   return (
     <fieldset className="space-y-4">
-      <legend className="text-sm font-medium text-primary">Additional guests in your party</legend>
+      <legend className="text-sm font-medium text-primary">Flere gjester i ditt følge</legend>
       <div className="space-y-3">
         {party.map((p, i) => (
           <GuestRow key={i} guest={p} index={i} onUpdate={onUpdate} onRemove={onRemove} />
         ))}
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onAdd} className="btn-secondary text-sm">
-            + Add guest
+            + Legg til gjest
           </button>
           {party.length > 0 && (
             <>
               <button type="button" onClick={() => onSetAll(true)} className="btn-secondary text-sm">
-                All attending
+                Alle kommer
               </button>
               <button type="button" onClick={() => onSetAll(false)} className="btn-secondary text-sm">
-                All not attending
+                Ingen kommer
               </button>
             </>
           )}

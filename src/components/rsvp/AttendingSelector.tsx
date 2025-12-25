@@ -11,7 +11,7 @@ export interface AttendingSelectorProps {
 export function AttendingSelector({ attending, onChange }: AttendingSelectorProps) {
   return (
     <fieldset className="space-y-3">
-      <legend className="text-sm font-medium text-primary">Will you be attending?</legend>
+      <legend className="text-sm font-medium text-primary">Kommer du?</legend>
       <div className="flex items-center gap-6">
         <label htmlFor="attending-yes" className="flex items-center gap-2 cursor-pointer group">
           <input
@@ -23,7 +23,7 @@ export function AttendingSelector({ attending, onChange }: AttendingSelectorProp
             className="w-4 h-4 text-primary accent-primary"
           />
           <span className="text-warm-gray group-hover:text-primary transition-colors">
-            Joyfully attending
+            Kommer med glede
           </span>
         </label>
         <label htmlFor="attending-no" className="flex items-center gap-2 cursor-pointer group">
@@ -36,7 +36,7 @@ export function AttendingSelector({ attending, onChange }: AttendingSelectorProp
             className="w-4 h-4 text-primary accent-primary"
           />
           <span className="text-warm-gray group-hover:text-primary transition-colors">
-            Regretfully declining
+            Kan dessverre ikke komme
           </span>
         </label>
       </div>

@@ -18,13 +18,13 @@ import { z } from 'zod';
 export const partyMemberSchema = z.object({
   firstName: z
     .string()
-    .min(1, 'First name is required')
-    .max(64, 'First name must be 64 characters or less')
+    .min(1, 'Fornavn er påkrevd')
+    .max(64, 'Fornavn må være 64 tegn eller mindre')
     .transform(s => s.trim()),
   lastName: z
     .string()
-    .min(1, 'Last name is required')
-    .max(64, 'Last name must be 64 characters or less')
+    .min(1, 'Etternavn er påkrevd')
+    .max(64, 'Etternavn må være 64 tegn eller mindre')
     .transform(s => s.trim()),
   attending: z.boolean(),
 });
@@ -34,8 +34,8 @@ export const partyMemberSchema = z.object({
  */
 export const emailSchema = z
   .string()
-  .email('Invalid email address')
-  .max(320, 'Email must be 320 characters or less')
+  .email('Ugyldig e-postadresse')
+  .max(320, 'E-post må være 320 tegn eller mindre')
   .transform(s => s.trim().toLowerCase())
   .optional()
   .nullable();
@@ -50,23 +50,23 @@ export const emailSchema = z
 export const createRsvpSchema = z.object({
   firstName: z
     .string()
-    .min(1, 'First name is required')
-    .max(64, 'First name must be 64 characters or less')
+    .min(1, 'Fornavn er påkrevd')
+    .max(64, 'Fornavn må være 64 tegn eller mindre')
     .transform(s => s.trim()),
   lastName: z
     .string()
-    .min(1, 'Last name is required')
-    .max(64, 'Last name must be 64 characters or less')
+    .min(1, 'Etternavn er påkrevd')
+    .max(64, 'Etternavn må være 64 tegn eller mindre')
     .transform(s => s.trim()),
   email: emailSchema,
   attending: z.boolean(),
   party: z
     .array(partyMemberSchema)
-    .max(10, 'Maximum 10 party members allowed')
+    .max(10, 'Maksimalt 10 gjester tillatt')
     .default([]),
   notes: z
     .string()
-    .max(1000, 'Notes must be 1000 characters or less')
+    .max(1000, 'Melding må være 1000 tegn eller mindre')
     .transform(s => s.trim())
     .optional()
     .nullable(),
@@ -128,7 +128,7 @@ export const requestTokenSchema = z.object({
   deviceId: z.string().optional(),
 }).refine(
   data => data.email || data.name,
-  { message: 'Either email or name is required' }
+  { message: 'Enten e-post eller navn er påkrevd' }
 );
 
 // ============================================================================
