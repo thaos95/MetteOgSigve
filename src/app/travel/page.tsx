@@ -185,7 +185,7 @@ export default function Travel() {
               <ul className="text-warm-gray text-sm space-y-1">
                 <li>• Gratis parkering tilgjengelig like før hovedporten</li>
                 <li>• <b>Stillethæler er ikke tillatt</b> – hælbredde skal være større enn en 1-krone</li>
-                <li>• Fingermat og apertiff serveres ved ankomst</li>
+                <li>• Fingermat og aperitiff serveres ved ankomst</li>
               </ul>
             </div>
             
@@ -310,8 +310,9 @@ export default function Travel() {
               <div className="p-4 bg-cream/50 rounded-lg border border-soft-border">
                 <h3 className="font-medium text-primary mb-2">Andre alternativer i nærheten</h3>
                 <ul className="text-sm text-warm-gray space-y-1">
-                  <li>• Holmestrand & Åsgårdstrand (begrenset)</li>
-                  <li>• Tønsberg (kort kjøretur)</li>
+                  <li>• Holmestrand</li>
+                  <li>• Horten/Tønsberg (kort kjøretur)</li>
+                  <li>• Airbnb og ferieutleie</li>
                 </ul>
               </div>
             </div>
