@@ -29,7 +29,6 @@ describe('Email Templates', () => {
     const mockRsvpSummary: RsvpData = {
       name: 'Test User',
       attending: true,
-      guestList: 'John Doe, Jane Doe',
       notes: 'Vegetarian meal please',
     };
 
@@ -99,8 +98,7 @@ describe('Email Templates', () => {
         rsvpSummary: mockRsvpSummary,
       });
 
-      expect(email.html).toContain('Attending');
-      expect(email.html).toContain('John Doe, Jane Doe');
+      expect(email.html).toContain('Kommer');
       expect(email.html).toContain('Vegetarian meal please');
     });
 
@@ -111,12 +109,11 @@ describe('Email Templates', () => {
         rsvpSummary: mockRsvpSummary,
       });
 
-      expect(email.text).toContain('Attending');
-      expect(email.text).toContain('John Doe, Jane Doe');
+      expect(email.text).toContain('Kommer');
       expect(email.text).toContain('Vegetarian meal please');
     });
 
-    it('shows "Unable to attend" when not attending', () => {
+    it('shows "Kan ikke komme" when not attending', () => {
       const notAttendingSummary: RsvpData = {
         ...mockRsvpSummary,
         attending: false,
@@ -127,8 +124,8 @@ describe('Email Templates', () => {
         rsvpSummary: notAttendingSummary,
       });
 
-      expect(email.html).toContain('Unable to attend');
-      expect(email.text).toContain('Unable to attend');
+      expect(email.html).toContain('Kan ikke komme');
+      expect(email.text).toContain('Kan ikke komme');
     });
 
     it('has correct subject line with couple names', () => {
@@ -139,7 +136,7 @@ describe('Email Templates', () => {
       });
 
       expect(email.subject).toContain('Mette & Sigve');
-      expect(email.subject).toContain('verify');
+      expect(email.subject).toContain('bekreft');
     });
 
     it('uses table-based layout for HTML', () => {
@@ -161,8 +158,8 @@ describe('Email Templates', () => {
         rsvpSummary: mockRsvpSummary,
       });
 
-      expect(email.html).toContain('Hi Alice');
-      expect(email.text).toContain('Hi Alice');
+      expect(email.html).toContain('Hei Alice');
+      expect(email.text).toContain('Hei Alice');
     });
   });
 
@@ -174,11 +171,11 @@ describe('Email Templates', () => {
         purpose: 'edit',
       });
 
-      expect(email.subject).toContain('edit');
-      expect(email.html).toContain('Hi Bob');
-      expect(email.html).toContain('edit');
+      expect(email.subject).toContain('endre');
+      expect(email.html).toContain('Hei Bob');
+      expect(email.html).toContain('endre');
       expect(email.html).toContain('https://example.com/edit?token=xyz');
-      expect(email.text).toContain('edit');
+      expect(email.text).toContain('endre');
     });
 
     it('generates cancel token email correctly', () => {
@@ -188,10 +185,10 @@ describe('Email Templates', () => {
         purpose: 'cancel',
       });
 
-      expect(email.subject).toContain('cancel');
-      expect(email.html).toContain('Hi Carol');
-      expect(email.html).toContain('cancel');
-      expect(email.text).toContain('cancel');
+      expect(email.subject).toContain('slette');
+      expect(email.html).toContain('Hei Carol');
+      expect(email.html).toContain('slette');
+      expect(email.text).toContain('slette');
     });
 
     it('includes expiration notice', () => {
@@ -201,8 +198,8 @@ describe('Email Templates', () => {
         purpose: 'edit',
       });
 
-      expect(email.html).toContain('1 hour');
-      expect(email.text).toContain('1 hour');
+      expect(email.html).toContain('1 time');
+      expect(email.text).toContain('1 time');
     });
   });
 
@@ -210,7 +207,6 @@ describe('Email Templates', () => {
     const mockRsvpSummary: RsvpData = {
       name: 'David',
       attending: true,
-      guestList: 'Emma',
       notes: 'Updated dietary info',
     };
 
@@ -220,9 +216,9 @@ describe('Email Templates', () => {
         rsvpSummary: mockRsvpSummary,
       });
 
-      expect(email.subject).toContain('updated');
-      expect(email.html).toContain('updated successfully');
-      expect(email.text).toContain('updated successfully');
+      expect(email.subject).toContain('Vi gleder oss til å se deg');
+      expect(email.html).toContain('Svaret ditt er oppdatert');
+      expect(email.text).toContain('Svaret ditt er oppdatert');
     });
 
     it('shows updated RSVP details', () => {
@@ -231,8 +227,7 @@ describe('Email Templates', () => {
         rsvpSummary: mockRsvpSummary,
       });
 
-      expect(email.html).toContain('Attending');
-      expect(email.html).toContain('Emma');
+      expect(email.html).toContain('Kommer');
       expect(email.html).toContain('Updated dietary info');
     });
 
@@ -245,6 +240,40 @@ describe('Email Templates', () => {
       expect(email.html).toContain('/rsvp');
       expect(email.text).toContain('/rsvp');
     });
+
+    it('includes venue details when attending', () => {
+      const email = updateConfirmationEmail({
+        name: 'David',
+        rsvpSummary: { name: 'David', attending: true },
+      });
+
+      expect(email.html).toContain(weddingConfig.ceremony.nameNorwegian);
+      expect(email.html).toContain(weddingConfig.venue.name);
+      expect(email.text).toContain(weddingConfig.ceremony.nameNorwegian);
+      expect(email.text).toContain(weddingConfig.venue.name);
+    });
+
+    it('includes practical information when attending', () => {
+      const email = updateConfirmationEmail({
+        name: 'David',
+        rsvpSummary: { name: 'David', attending: true },
+      });
+
+      expect(email.html).toContain('Praktisk informasjon');
+      expect(email.html).toContain('kirken');
+      expect(email.text).toContain('PRAKTISK INFO');
+    });
+
+    it('does not include venue details when not attending', () => {
+      const email = updateConfirmationEmail({
+        name: 'David',
+        rsvpSummary: { name: 'David', attending: false },
+      });
+
+      expect(email.html).not.toContain(weddingConfig.ceremony.nameNorwegian);
+      expect(email.html).not.toContain('Praktisk informasjon');
+      expect(email.subject).toContain('Svar oppdatert');
+    });
   });
 
   describe('cancelConfirmationEmail', () => {
@@ -253,9 +282,9 @@ describe('Email Templates', () => {
         name: 'Frank',
       });
 
-      expect(email.subject).toContain('cancelled');
-      expect(email.html).toContain('cancelled');
-      expect(email.text).toContain('cancelled');
+      expect(email.subject).toContain('slettet');
+      expect(email.html).toContain('slettet');
+      expect(email.text).toContain('slettet');
     });
 
     it('offers option to re-RSVP', () => {
@@ -263,7 +292,7 @@ describe('Email Templates', () => {
         name: 'Frank',
       });
 
-      expect(email.html).toContain('new RSVP');
+      expect(email.html).toContain('nytt svar');
       expect(email.html).toContain('/rsvp');
       expect(email.text).toContain('/rsvp');
     });
@@ -273,8 +302,8 @@ describe('Email Templates', () => {
         name: 'Grace',
       });
 
-      expect(email.html).toContain("sorry you won't be able to join");
-      expect(email.text).toContain("sorry you won't be able to join");
+      expect(email.html).toContain('Det var synd at du ikke kunne komme');
+      expect(email.text).toContain('Det var synd at du ikke kunne komme');
     });
   });
 
@@ -283,10 +312,10 @@ describe('Email Templates', () => {
       const verifyEmail = verificationEmail({
         name: 'Test',
         verifyLink: 'https://example.com',
-        rsvpSummary: { name: 'Test', attending: true, guestList: '' },
+        rsvpSummary: { name: 'Test', attending: true },
       });
       const token = tokenEmail({ name: 'Test', link: 'https://example.com', purpose: 'edit' });
-      const update = updateConfirmationEmail({ name: 'Test', rsvpSummary: { name: 'Test', attending: true, guestList: '' } });
+      const update = updateConfirmationEmail({ name: 'Test', rsvpSummary: { name: 'Test', attending: true } });
       const cancel = cancelConfirmationEmail({ name: 'Test' });
 
       [verifyEmail, token, update, cancel].forEach((email) => {
@@ -299,7 +328,7 @@ describe('Email Templates', () => {
       const verifyEmail = verificationEmail({
         name: 'Test',
         verifyLink: 'https://example.com',
-        rsvpSummary: { name: 'Test', attending: true, guestList: '' },
+        rsvpSummary: { name: 'Test', attending: true },
       });
 
       // Should not reference external stylesheets
@@ -314,7 +343,7 @@ describe('Email Templates', () => {
       const verifyEmail = verificationEmail({
         name: 'Test',
         verifyLink: 'https://example.com',
-        rsvpSummary: { name: 'Test', attending: true, guestList: '' },
+        rsvpSummary: { name: 'Test', attending: true },
       });
 
       // Preheader is hidden text at the top for preview

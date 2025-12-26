@@ -4,6 +4,13 @@ import user from '@testing-library/user-event';
 import { vi } from 'vitest';
 import RSVPForm from '../RSVPForm';
 
+/**
+ * RSVPForm Unit Tests
+ * 
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party members)
+ * - Email is optional
+ */
 describe('RSVPForm', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -11,28 +18,20 @@ describe('RSVPForm', () => {
     try { localStorage.removeItem('__device_id'); } catch (e) { }
   });
 
-  test('submits payload including party and x-device-id header when present', async () => {
+  test('submits payload with x-device-id header when present', async () => {
     // set device id
     try { localStorage.setItem('__device_id', 'device-123'); } catch (e) { }
 
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, rsvp: { id: 'new-id' } }) });
     (globalThis as any).fetch = fetchMock;
 
     render(<RSVPForm />);
 
-    await user.type(screen.getByLabelText(/first name/i), 'Jane');
-    await user.type(screen.getByLabelText(/last name/i), 'Doe');
-
-    // add a party member
-    await user.click(screen.getByRole('button', { name: /add guest/i }));
-    // fill guest inputs - look for the sr-only labeled inputs for Guest 1
-    const firstGuest = screen.getByLabelText(/Guest 1 first name/i);
-    const lastGuest = screen.getByLabelText(/Guest 1 last name/i);
-    await user.type(firstGuest, 'GuestFirst');
-    await user.type(lastGuest, 'GuestLast');
+    await user.type(screen.getByLabelText(/Fornavn/i), 'Jane');
+    await user.type(screen.getByLabelText(/Etternavn/i), 'Doe');
 
     // submit
-    await user.click(screen.getByRole('button', { name: /send rsvp/i }));
+    await user.click(screen.getByRole('button', { name: /Send svar/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
@@ -45,42 +44,52 @@ describe('RSVPForm', () => {
 
     const body = JSON.parse(opts.body);
     expect(body.firstName).toBe('Jane');
-    expect(Array.isArray(body.party)).toBe(true);
-    expect(body.party[0].firstName).toBe('GuestFirst');
+    expect(body.lastName).toBe('Doe');
   });
 
-  test('mark all attending toggles party attendance', async () => {
+  test('submits with optional email', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, rsvp: { id: 'new-id' } }) });
+    (globalThis as any).fetch = fetchMock;
+
     render(<RSVPForm />);
 
-    await user.click(screen.getByRole('button', { name: /add guest/i }));
-    await user.click(screen.getByRole('button', { name: /add guest/i }));
+    await user.type(screen.getByLabelText(/Fornavn/i), 'Jane');
+    await user.type(screen.getByLabelText(/Etternavn/i), 'Doe');
+    // Use the specific email field by id (not the send-to-email field)
+    await user.type(document.getElementById('email')!, 'jane@example.com');
 
-    // uncheck both by toggling each guest checkbox (filter by label text)
-    const checkboxes = screen.getAllByRole('checkbox');
-    const guestCheckboxes = checkboxes.filter(cb => {
-      const label = cb.closest('label')?.textContent?.trim();
-      return label === 'Attending';
-    });
-    for (const cb of guestCheckboxes) await user.click(cb); // toggle off
+    await user.click(screen.getByRole('button', { name: /Send svar/i }));
 
-    // ensure they're unchecked
-    for (const cb of guestCheckboxes) expect(cb).not.toBeChecked();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
 
-    // click mark all attending (button text changed to "All attending")
-    await user.click(screen.getByRole('button', { name: /all attending/i }));
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.email).toBe('jane@example.com');
+  });
 
-    // now they should be checked (filter by label again)
-    const postCheckboxes = screen.getAllByRole('checkbox').filter(cb => {
-      const label = cb.closest('label')?.textContent?.trim();
-      return label === 'Attending';
-    });
-    for (const cb of postCheckboxes) expect(cb).toBeChecked();
+  test('submits without email (email is optional)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, rsvp: { id: 'new-id' } }) });
+    (globalThis as any).fetch = fetchMock;
+
+    render(<RSVPForm />);
+
+    await user.type(screen.getByLabelText(/Fornavn/i), 'Jane');
+    await user.type(screen.getByLabelText(/Etternavn/i), 'Doe');
+    // do not fill email
+
+    await user.click(screen.getByRole('button', { name: /Send svar/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.firstName).toBe('Jane');
+    // email is null when not provided (falsy check)
+    expect(body.email == null || body.email === '').toBe(true);
   });
 
   test('submits update with pasted token when provided', async () => {
     // prepare fetch mock: first call for verify-token, second for PUT
-    const verifyRes = { ok: true, json: async () => ({ ok: true, rsvp: { id: 'rsvp-1', first_name: 'Existing', last_name: 'Person', email: 'existing@example.com', party: [] } }) };
-    const putRes = { ok: true };
+    const verifyRes = { ok: true, json: async () => ({ ok: true, rsvp: { id: 'rsvp-1', first_name: 'Existing', last_name: 'Person', email: 'existing@example.com' } }) };
+    const putRes = { ok: true, json: async () => ({ ok: true }) };
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(verifyRes)
       .mockResolvedValueOnce(putRes);
@@ -88,19 +97,19 @@ describe('RSVPForm', () => {
 
     render(<RSVPForm />);
 
-    await user.type(screen.getByLabelText(/first name/i), 'Jane');
-    await user.type(screen.getByLabelText(/last name/i), 'Doe');
+    await user.type(screen.getByLabelText(/Fornavn/i), 'Jane');
+    await user.type(screen.getByLabelText(/Etternavn/i), 'Doe');
     
     // Expand the token management section (it's in a details element now)
-    await user.click(screen.getByText(/Need to edit or cancel/i));
+    await user.click(screen.getByText(/Trenger du \u00e5 endre et eksisterende svar/i));
     
-    await user.type(screen.getByPlaceholderText(/Paste token/i), 'token-abc');
+    await user.type(screen.getByPlaceholderText(/Lim inn token/i), 'token-abc');
 
     // click Use token to load RSVP
-    await user.click(screen.getByRole('button', { name: /Use token/i }));
+    await user.click(screen.getByRole('button', { name: /Bruk token/i }));
 
     // now submit update (handle either Send or Update button text)
-    const submitBtn = screen.getByRole('button', { name: /send rsvp|update rsvp/i });
+    const submitBtn = screen.getByRole('button', { name: /Send svar|Oppdater svar/i });
     await user.click(submitBtn);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -117,17 +126,19 @@ describe('RSVPForm', () => {
 
     render(<RSVPForm />);
 
-    // fill email
-    await user.type(screen.getByLabelText(/^Email$/i), 'alice@example.com');
+    // fill email using specific id
+    await user.type(document.getElementById('email')!, 'alice@example.com');
     
     // Expand the token management section (it's in a details element now)
-    await user.click(screen.getByText(/Need to edit or cancel/i));
+    await user.click(screen.getByText(/Trenger du \u00e5 endre et eksisterende svar/i));
     
-    // fill send-to email and check update checkbox
-    await user.type(screen.getByLabelText(/Send link to email/i), 'alt@example.com');
-    await user.click(screen.getByLabelText(/Update RSVP email/i));
+    // fill send-to email with a different email and check update checkbox
+    const sendToEmailInput = screen.getByLabelText(/E-postadresse/i);
+    await user.clear(sendToEmailInput);
+    await user.type(sendToEmailInput, 'alt@example.com');
+    await user.click(screen.getByLabelText(/Oppdater svar-epost/i));
 
-    await user.click(screen.getByRole('button', { name: /Request edit\/cancel link/i }));
+    await user.click(screen.getByRole('button', { name: /Be om endringslenke/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const opts = fetchMock.mock.calls[0][1];
@@ -142,16 +153,17 @@ describe('RSVPForm', () => {
 
     render(<RSVPForm />);
 
-    await user.type(screen.getByLabelText(/^Email$/i), 'bob@example.com');
+    // fill email using specific id
+    await user.type(document.getElementById('email')!, 'bob@example.com');
     
     // Expand the token management section (it's in a details element now)
-    await user.click(screen.getByText(/Need to edit or cancel/i));
+    await user.click(screen.getByText(/Trenger du \u00e5 endre et eksisterende svar/i));
     
-    await user.click(screen.getByRole('button', { name: /Generate test token \(dev\)/i }));
+    await user.click(screen.getByRole('button', { name: /Generer testtoken \(dev\)/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     // pasted token input should now contain dev token
-    const pasted = screen.getByPlaceholderText(/Paste token here/i) as HTMLInputElement;
+    const pasted = screen.getByPlaceholderText(/Lim inn token her/i) as HTMLInputElement;
     expect(pasted.value).toBe('dev-123');
   });
 });

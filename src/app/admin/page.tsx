@@ -1,16 +1,21 @@
 "use client";
 import { useState } from "react";
 import AuditLogsViewer from '../../components/AuditLogsViewer';
-import AddGuestModal from '../../components/AddGuestModal';
 import Toast from '../../components/Toast';
 import { ToastProvider, useToast } from '../../components/toast/ToastContext';
 
+/**
+ * Admin Dashboard
+ * 
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party management)
+ * - No verified/unverified distinction (all RSVPs are confirmed on creation)
+ */
 function InnerAdminPage() {
   const [password, setPassword] = useState("");
   const [authorized, setAuthorized] = useState(false);
   const [rsvps, setRsvps] = useState<any[]>([]);
   const [showAudit, setShowAudit] = useState(false);
-  const [showAddGuest, setShowAddGuest] = useState<{ open: boolean; rsvpId?: string | number } | null>(null);
   const { addToast } = useToast();
 
 
@@ -46,24 +51,17 @@ function InnerAdminPage() {
   const [filterAttending, setFilterAttending] = useState<'all'|'yes'|'no'>('all');
   const [filterFrom, setFilterFrom] = useState('');
   const [filterTo, setFilterTo] = useState('');
-  const [includeUnverified, setIncludeUnverified] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [memberFilter, setMemberFilter] = useState('');
-  const [memberAttendingFilter, setMemberAttendingFilter] = useState<'' | 'yes' | 'no'>('');
   const [emailFilter, setEmailFilter] = useState('');
 
-  // Compute dashboard stats
+  // Compute dashboard stats (simplified - no verification distinction)
   const stats = {
     total: rsvps.length,
-    verified: rsvps.filter(r => r.verified).length,
-    unverified: rsvps.filter(r => !r.verified).length,
     attending: rsvps.filter(r => r.attending).length,
     notAttending: rsvps.filter(r => !r.attending).length,
-    totalGuests: rsvps.reduce((sum, r) => {
-      let party: any[] = [];
-      try { if (Array.isArray(r.party)) party = r.party; else if (r.party && typeof r.party === 'string') party = JSON.parse(r.party); } catch (e) { party = []; }
-      return sum + 1 + party.length;
-    }, 0),
+    withEmail: rsvps.filter(r => r.email).length,
+    withoutEmail: rsvps.filter(r => !r.email).length,
   };
 
   async function exportCSV(e?: React.FormEvent) {
@@ -71,7 +69,7 @@ function InnerAdminPage() {
     const res = await fetch('/api/admin/export-rsvps', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, attending: filterAttending, from: filterFrom || undefined, to: filterTo || undefined, include_unverified: includeUnverified, include_party_rows: true, person_name: memberFilter || undefined, person_attending: memberAttendingFilter || undefined }),
+      body: JSON.stringify({ password, attending: filterAttending, from: filterFrom || undefined, to: filterTo || undefined, person_name: memberFilter || undefined }),
     });
     if (!res.ok) { const data = await res.json(); alert(data.error ?? 'Export failed'); return; }
     const blob = await res.blob();
@@ -89,7 +87,7 @@ function InnerAdminPage() {
     const res = await fetch('/api/admin/email-rsvps', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, to: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'metteogsigve@gmail.com', include_party_rows: true, person_name: memberFilter || undefined, person_attending: memberAttendingFilter || undefined }),
+      body: JSON.stringify({ password, to: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'metteogsigve@gmail.com', person_name: memberFilter || undefined }),
     });
     const data = await res.json();
     if (!res.ok) alert(data.error ?? 'Email backup failed'); else alert('Backup sent');
@@ -128,8 +126,8 @@ function InnerAdminPage() {
         </div>
       ) : (
         <div className="mt-4 space-y-4">
-          {/* Dashboard Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* Dashboard Stats (simplified) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <div className="p-3 bg-blue-50 rounded border border-blue-200">
               <div className="text-2xl font-bold text-blue-700">{stats.total}</div>
               <div className="text-xs text-blue-600">Total RSVPs</div>
@@ -143,16 +141,12 @@ function InnerAdminPage() {
               <div className="text-xs text-red-600">Not Attending</div>
             </div>
             <div className="p-3 bg-emerald-50 rounded border border-emerald-200">
-              <div className="text-2xl font-bold text-emerald-700">{stats.verified}</div>
-              <div className="text-xs text-emerald-600">Verified</div>
+              <div className="text-2xl font-bold text-emerald-700">{stats.withEmail}</div>
+              <div className="text-xs text-emerald-600">With Email</div>
             </div>
             <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
-              <div className="text-2xl font-bold text-yellow-700">{stats.unverified}</div>
-              <div className="text-xs text-yellow-600">Unverified</div>
-            </div>
-            <div className="p-3 bg-purple-50 rounded border border-purple-200">
-              <div className="text-2xl font-bold text-purple-700">{stats.totalGuests}</div>
-              <div className="text-xs text-purple-600">Total Guests</div>
+              <div className="text-2xl font-bold text-yellow-700">{stats.withoutEmail}</div>
+              <div className="text-xs text-yellow-600">No Email</div>
             </div>
           </div>
 
@@ -185,27 +179,13 @@ function InnerAdminPage() {
                 <label htmlFor="filter-to" className="block text-xs text-gray-600 mb-1">To date</label>
                 <input id="filter-to" type="date" value={filterTo} onChange={e => setFilterTo(e.target.value)} className="w-full p-2 border rounded text-sm" />
               </div>
-              <div className="flex items-end">
-                <label htmlFor="include-unverified" className="flex items-center gap-2">
-                  <input id="include-unverified" type="checkbox" checked={includeUnverified} onChange={e => setIncludeUnverified(e.target.checked)} />
-                  <span className="text-sm">Include unverified</span>
-                </label>
-              </div>
               <div>
-                <label htmlFor="member-filter" className="block text-xs text-gray-600 mb-1">Member name</label>
+                <label htmlFor="member-filter" className="block text-xs text-gray-600 mb-1">Name</label>
                 <input id="member-filter" value={memberFilter} onChange={e => setMemberFilter(e.target.value)} placeholder="Filter by name" className="w-full p-2 border rounded text-sm" />
               </div>
               <div>
                 <label htmlFor="email-filter" className="block text-xs text-gray-600 mb-1">Email</label>
                 <input id="email-filter" value={emailFilter} onChange={e => setEmailFilter(e.target.value)} placeholder="Filter by email" className="w-full p-2 border rounded text-sm" />
-              </div>
-              <div>
-                <label htmlFor="member-attending-filter" className="block text-xs text-gray-600 mb-1">Member attending</label>
-                <select id="member-attending-filter" value={memberAttendingFilter} onChange={e => setMemberAttendingFilter(e.target.value as '' | 'yes' | 'no')} className="w-full p-2 border rounded text-sm">
-                  <option value="">Any</option>
-                  <option value="yes">Attending</option>
-                  <option value="no">Not attending</option>
-                </select>
               </div>
             </div>
           </details>
@@ -266,23 +246,6 @@ function InnerAdminPage() {
             </div>
           </details>
 
-          {showAddGuest && showAddGuest.open && (
-            <AddGuestModal
-              open={showAddGuest.open}
-              initialFirst={''}
-              initialLast={''}
-              onClose={() => setShowAddGuest(null)}
-              onSave={async (p) => {
-                try {
-                  const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: showAddGuest.rsvpId, action: 'add', firstName: p.firstName, lastName: p.lastName, attending: p.attending }) });
-                  const d = await res.json(); if (!res.ok) return alert(d.error || 'Failed to add guest');
-                  setRsvps(rsvps.map(x => x.id === d.rsvp.id ? d.rsvp : x));
-                  // show success toast
-                  addToast({ message: 'Guest added', variant: 'success' });
-                } catch (e) { alert('Failed to add guest'); }
-              }}
-            />
-          )}
           {showAudit && authorized && <AuditLogsViewer password={password} onClose={() => setShowAudit(false)} />}
 
           <ul className="mt-2 space-y-2">
@@ -293,97 +256,38 @@ function InnerAdminPage() {
                   const ef = emailFilter.toLowerCase();
                   if (!String(r.email || '').toLowerCase().includes(ef)) return false;
                 }
-                if (!memberFilter && !memberAttendingFilter) return true;
-                const mf = memberFilter ? String(memberFilter).toLowerCase() : null;
-                let party: any[] = [];
-                try { if (Array.isArray(r.party)) party = r.party; else if (r.party && typeof r.party === 'string') party = JSON.parse(r.party); } catch (e) { party = []; }
-                const people = [{ firstName: r.first_name || (r.name ? String(r.name).split(/\s+/)[0] : ''), lastName: r.last_name || (r.name ? String(r.name).split(/\s+/).slice(-1).join(' ') : ''), attending: !!r.attending }, ...party.map((p:any)=>({ firstName: p.firstName||p.first_name||'', lastName: p.lastName||p.last_name||'', attending: p.attending!==undefined?!!p.attending:!!r.attending }))];
-                if (mf) {
-                  const found = people.some(p => (String(p.firstName||'') + ' ' + String(p.lastName||'')).toLowerCase().includes(mf));
-                  if (!found) return false;
-                }
-                if (memberAttendingFilter === 'yes') {
-                  const found = people.some(p => p.attending);
-                  if (!found) return false;
-                }
-                if (memberAttendingFilter === 'no') {
-                  const found = people.every(p => !p.attending);
-                  if (!found) return false;
+                // Name filter
+                if (memberFilter) {
+                  const mf = memberFilter.toLowerCase();
+                  const fullName = `${r.first_name || ''} ${r.last_name || ''} ${r.name || ''}`.toLowerCase();
+                  if (!fullName.includes(mf)) return false;
                 }
                 return true;
               })
               .map(r => {
-              // normalize party field (could be array or JSON string or null)
-              let party: Array<any> = [];
-              try {
-                if (Array.isArray(r.party)) party = r.party;
-                else if (r.party && typeof r.party === 'string') party = JSON.parse(r.party);
-              } catch (e) { party = []; }
               return (
-                <li key={r.id} className="p-2 border rounded">
+                <li key={r.id} className="p-3 border rounded">
                   <div className="flex items-center justify-between">
                     <div>
-                      <strong>{r.name}</strong> — {r.email} — {r.attending ? 'Attending' : 'Not attending'}
-                      <div className="text-sm text-gray-600 mt-1">{r.notes}</div>
+                      <strong>{r.name || `${r.first_name} ${r.last_name}`}</strong>
+                      {r.email ? (
+                        <span className="text-gray-600 ml-2">— {r.email}</span>
+                      ) : (
+                        <span className="text-yellow-600 ml-2 text-sm">(ingen e-post)</span>
+                      )}
                     </div>
-                    <div className="text-sm text-gray-700">Party size: {1 + (party?.length || 0)}</div>
-                  </div>
-
-                  <div className="mt-2">
-                    <div className="text-sm font-medium">Party members:</div>
-                    <ul className="ml-4 list-disc text-sm">
-                      <li>{r.first_name ?? r.name?.split(/\s+/)[0]} {r.last_name ?? r.name?.split(/\s+/).slice(-1).join(' ')} — {r.attending ? 'Attending' : 'Not attending'}
-                        <button onClick={async () => {
-                          // toggle primary attending
-                          const res = await fetch('/api/admin/update-person', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: r.id, target: 'primary', attending: !r.attending }) });
-                          const d = await res.json();
-                          if (!res.ok) alert(d.error || 'Failed'); else {
-                            setRsvps(rsvps.map(x => x.id === r.id ? d.rsvp : x));
-                            alert('Updated');
-                          }
-                        }} className="ml-2 px-2 py-1 bg-gray-200 rounded text-xs">Toggle primary</button>
-                      </li>
-                      {party && party.length > 0 ? party.map((p: any, i: number) => (
-                        <li key={i} className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <input value={(p.firstName ?? p.first_name) || ''} onChange={e => setRsvps(rsvps.map(x => x.id === r.id ? { ...x, party: (x.party||[]).map((pp:any,ii:number)=>ii===i?{...pp,firstName:e.target.value}:pp) } : x))} className="p-1 border rounded w-32" />
-                              <input value={(p.lastName ?? p.last_name) || ''} onChange={e => setRsvps(rsvps.map(x => x.id === r.id ? { ...x, party: (x.party||[]).map((pp:any,ii:number)=>ii===i?{...pp,lastName:e.target.value}:pp) } : x))} className="p-1 border rounded w-32" />
-                              <label className="flex items-center gap-1"><input type="checkbox" checked={!!p.attending} onChange={e => setRsvps(rsvps.map(x => x.id === r.id ? { ...x, party: (x.party||[]).map((pp:any,ii:number)=>ii===i?{...pp,attending:e.target.checked}:pp) } : x))} /> Attending</label>
-                            </div>
-                            <div className="mt-1 text-xs text-gray-500">Edit fields above then use Save/Move/Remove</div>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <button onClick={async () => {
-                              // save edit
-                              const guest = (r.party||[])[i];
-                              const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: r.id, action: 'update', index: i, firstName: guest.firstName ?? guest.first_name, lastName: guest.lastName ?? guest.last_name, attending: !!guest.attending }) });
-                              const d = await res.json(); if (!res.ok) alert(d.error || 'Failed'); else { setRsvps(rsvps.map(x => x.id === r.id ? d.rsvp : x)); alert('Saved'); }
-                            }} className="px-2 py-1 bg-blue-600 text-white rounded text-xs">Save</button>
-                            <button onClick={async () => {
-                              // move up
-                              const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: r.id, action: 'move', index: i, dir: 'up' }) });
-                              const d = await res.json(); if (!res.ok) alert(d.error || 'Failed'); else { setRsvps(rsvps.map(x => x.id === r.id ? d.rsvp : x)); }
-                            }} className="px-2 py-1 bg-gray-200 rounded text-xs">↑</button>
-                            <button onClick={async () => {
-                              // move down
-                              const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: r.id, action: 'move', index: i, dir: 'down' }) });
-                              const d = await res.json(); if (!res.ok) alert(d.error || 'Failed'); else { setRsvps(rsvps.map(x => x.id === r.id ? d.rsvp : x)); }
-                            }} className="px-2 py-1 bg-gray-200 rounded text-xs">↓</button>
-                            <button onClick={async () => {
-                              if (!confirm('Remove this guest?')) return;
-                              const res = await fetch('/api/admin/edit-guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, rsvpId: r.id, action: 'remove', index: i }) });
-                              const d = await res.json(); if (!res.ok) alert(d.error || 'Failed'); else { setRsvps(rsvps.map(x => x.id === r.id ? d.rsvp : x)); }
-                            }} className="px-2 py-1 bg-red-600 text-white rounded text-xs">Remove</button>
-                          </div>
-                        </li>
-                      )) : <li className="text-sm text-gray-500">No additional guests</li>}
-                    <div className="mt-2">
-                      <button onClick={() => { setShowAddGuest({ open: true, rsvpId: r.id }); }} className="mt-2 px-3 py-1 bg-green-600 text-white rounded text-sm">Add guest</button>
+                    <div className={`px-2 py-1 rounded text-sm ${r.attending ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {r.attending ? 'Kommer' : 'Kommer ikke'}
                     </div>
-                    </ul>
                   </div>
-
+                  {r.notes && (
+                    <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                      {r.notes}
+                    </div>
+                  )}
+                  <div className="mt-2 text-xs text-gray-400">
+                    Registrert: {new Date(r.created_at).toLocaleString('nb-NO')}
+                  </div>
                 </li>
               );
             })}

@@ -1,5 +1,4 @@
 "use client";
-import type { PartyMember } from "./GuestRow";
 
 export interface ExistingRsvp {
   id: string;
@@ -8,7 +7,6 @@ export interface ExistingRsvp {
   last_name?: string;
   email?: string;
   attending?: boolean;
-  party?: PartyMember[];
 }
 
 export interface DuplicateModalProps {
@@ -20,10 +18,10 @@ export interface DuplicateModalProps {
 
 /**
  * Warning modal shown when a duplicate RSVP is detected.
+ * SIMPLIFIED: No party members display (one person per RSVP).
  */
 export function DuplicateModal({ existing, onEdit, onCancel, onCreateAnyway }: DuplicateModalProps) {
   const displayName = existing.name ?? `${existing.first_name} ${existing.last_name}`;
-  const partyMembers = existing.party && Array.isArray(existing.party) ? existing.party : [];
 
   return (
     <div className="mt-6 p-5 border-2 border-accent/30 rounded-xl bg-accent/5">
@@ -43,31 +41,19 @@ export function DuplicateModal({ existing, onEdit, onCancel, onCreateAnyway }: D
           <p className="text-sm text-warm-gray mb-3">Vi fant et svar som kan være ditt:</p>
           <div className="bg-white/60 rounded-lg p-3 mb-4">
             <p className="font-medium text-primary">{displayName}</p>
-            <p className="text-sm text-warm-gray">{existing.email}</p>
-            <div className="mt-2 text-sm">
-              <span className="text-warm-gray">Følge:</span>
-              <ul className="ml-4 mt-1 space-y-0.5">
-                <li className="flex items-center gap-2">
-                  <span
-                    className={`w-2 h-2 rounded-full ${existing.attending ? "bg-success" : "bg-error"}`}
-                  />
-                  {existing.first_name} {existing.last_name}
-                </li>
-                {partyMembers.map((p, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${p.attending ? "bg-success" : "bg-error"}`} />
-                    {p.firstName} {p.lastName}
-                  </li>
-                ))}
-              </ul>
+            {existing.email && <p className="text-sm text-warm-gray">{existing.email}</p>}
+            <div className="mt-2 text-sm flex items-center gap-2">
+              <span
+                className={`w-2 h-2 rounded-full ${existing.attending ? "bg-success" : "bg-error"}`}
+              />
+              <span className="text-warm-gray">
+                {existing.attending ? "Kommer" : "Kommer ikke"}
+              </span>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => onEdit(existing)} className="btn-primary text-sm">
               Endre dette svaret
-            </button>
-            <button type="button" onClick={() => onCancel(existing.id)} className="btn-danger text-sm">
-              Slett svar
             </button>
             <button type="button" onClick={onCreateAnyway} className="btn-secondary text-sm">
               Opprett nytt likevel

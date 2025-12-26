@@ -4,19 +4,31 @@ import user from '@testing-library/user-event';
 import { vi } from 'vitest';
 import AdminPage from '../page';
 
-const initialRsvp = { id: 1, name: 'Test Guest', email: 'test@example.com', attending: true, first_name: 'Test', last_name: 'Guest', notes: '', party: [] };
-const updatedRsvp = { ...initialRsvp, party: [{ firstName: 'New', lastName: 'Guest', attending: true }] };
+/**
+ * Admin Page Tests
+ * 
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party management)
+ * - No verified/unverified distinction
+ */
+const testRsvp = { 
+  id: 1, 
+  name: 'Test Guest', 
+  email: 'test@example.com', 
+  attending: true, 
+  first_name: 'Test', 
+  last_name: 'Guest', 
+  notes: 'Test notes',
+  created_at: new Date().toISOString()
+};
 
-describe('AdminPage Add guest flow', () => {
+describe('AdminPage basic flow', () => {
   let fetchMock: any;
 
   beforeEach(() => {
     fetchMock = vi.fn(async (url: string, opts?: any) => {
       if (url.endsWith('/api/admin/rsvps') && opts?.method === 'POST') {
-        return { ok: true, json: async () => ({ rsvps: [initialRsvp] }) };
-      }
-      if (url.endsWith('/api/admin/edit-guest') && opts?.method === 'POST') {
-        return { ok: true, json: async () => ({ rsvp: updatedRsvp }) };
+        return { ok: true, json: async () => ({ rsvps: [testRsvp] }) };
       }
       return { ok: true, json: async () => ({}) };
     });
@@ -25,7 +37,7 @@ describe('AdminPage Add guest flow', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  test('login, open Add Guest modal, add guest and update rsvp list', async () => {
+  test('login and display RSVP list', async () => {
     render(<AdminPage />);
 
     // login with password
@@ -38,24 +50,22 @@ describe('AdminPage Add guest flow', () => {
       expect(els.length).toBeGreaterThan(0);
     });
 
-    // Click Add guest for the rsvp
-    await user.click(screen.getByRole('button', { name: /add guest$/i }));
+    // Stats should be displayed - use getAllByText since "Attending" appears multiple times (stat card + filter options)
+    await waitFor(() => expect(screen.getByText(/Total RSVPs/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText(/Attending/i).length).toBeGreaterThan(0));
+  });
 
-    // Modal should appear (dialog role)
-    await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+  test('displays RSVP details correctly', async () => {
+    render(<AdminPage />);
 
-    // Fill modal and save
-    await user.type(screen.getByLabelText(/first name/i), 'New');
-    await user.type(screen.getByLabelText(/last name/i), 'Guest');
-    await user.click(screen.getByRole('button', { name: /save/i }));
+    // login
+    await user.type(screen.getByPlaceholderText(/Admin password/i), 'pw');
+    await user.click(screen.getByRole('button', { name: /login/i }));
 
-    // The admin edit-guest endpoint should have been called
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/admin/edit-guest', expect.anything()));
-
-    // After saving, the party size indicator should reflect new guest
-    await waitFor(() => expect(screen.getByText(/Party size: 2/)).toBeInTheDocument());
-
-    // Toast should be shown with success message
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/guest added/i));
+    // wait for rsvp to be shown with attending status
+    await waitFor(() => expect(screen.getByText(/Kommer/i)).toBeInTheDocument());
+    
+    // email should be displayed
+    await waitFor(() => expect(screen.getByText(/test@example.com/i)).toBeInTheDocument());
   });
 });
