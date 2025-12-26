@@ -164,11 +164,14 @@ export default function RSVPForm() {
     setEditId(existing.id);
     setShowExisting(null);
 
+    // Use form email field if existing RSVP has no email stored
+    const emailToUse = existing.email || email;
+    
     // Auto-request token if email available
-    if (!pastedToken && existing.email) {
+    if (!pastedToken && emailToUse) {
       try {
         const recaptchaToken = await getRecaptchaToken("request-token");
-        const body: any = { email: existing.email, purpose: "edit" };
+        const body: any = { email: emailToUse, purpose: "edit" };
         if (recaptchaToken) body.recaptchaToken = recaptchaToken;
         const deviceId = (() => {
           try {
@@ -191,7 +194,7 @@ export default function RSVPForm() {
             alert("Utviklermodus: Endringstoken lagt til automatisk. Du kan nå oppdatere svaret ditt.");
           } else {
             alert(
-              `Vi har sendt en sikker lenke til ${existing.email}. Vennligst sjekk innboksen din og klikk på lenken for å fullføre endringen.`
+              `Vi har sendt en sikker lenke til ${emailToUse}. Vennligst sjekk innboksen din og klikk på lenken for å fullføre endringen.`
             );
             setEditId(null);
           }
@@ -204,8 +207,8 @@ export default function RSVPForm() {
         alert("Kunne ikke be om endringslenke. Vennligst prøv igjen.");
         setEditId(null);
       }
-    } else if (!existing.email) {
-      alert("Dette svaret har ingen e-post registrert. Vennligst kontakt oss direkte for å gjøre endringer.");
+    } else if (!emailToUse) {
+      alert("Vennligst fyll inn e-post i feltet over for å motta en endringslenke.");
       setEditId(null);
     }
   }

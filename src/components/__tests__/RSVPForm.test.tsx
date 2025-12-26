@@ -101,7 +101,7 @@ describe('RSVPForm', () => {
     await user.type(screen.getByLabelText(/Etternavn/i), 'Doe');
     
     // Expand the token management section (it's in a details element now)
-    await user.click(screen.getByText(/Trenger du å endre eller kansellere/i));
+    await user.click(screen.getByText(/Trenger du \u00e5 endre et eksisterende svar/i));
     
     await user.type(screen.getByPlaceholderText(/Lim inn token/i), 'token-abc');
 
@@ -130,13 +130,15 @@ describe('RSVPForm', () => {
     await user.type(document.getElementById('email')!, 'alice@example.com');
     
     // Expand the token management section (it's in a details element now)
-    await user.click(screen.getByText(/Trenger du å endre eller kansellere/i));
+    await user.click(screen.getByText(/Trenger du \u00e5 endre et eksisterende svar/i));
     
-    // fill send-to email and check update checkbox
-    await user.type(screen.getByLabelText(/Send lenke til e-post/i), 'alt@example.com');
+    // fill send-to email with a different email and check update checkbox
+    const sendToEmailInput = screen.getByLabelText(/E-postadresse/i);
+    await user.clear(sendToEmailInput);
+    await user.type(sendToEmailInput, 'alt@example.com');
     await user.click(screen.getByLabelText(/Oppdater svar-epost/i));
 
-    await user.click(screen.getByRole('button', { name: /Be om endrings-\/slettelenke/i }));
+    await user.click(screen.getByRole('button', { name: /Be om endringslenke/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const opts = fetchMock.mock.calls[0][1];
@@ -155,7 +157,7 @@ describe('RSVPForm', () => {
     await user.type(document.getElementById('email')!, 'bob@example.com');
     
     // Expand the token management section (it's in a details element now)
-    await user.click(screen.getByText(/Trenger du å endre eller kansellere/i));
+    await user.click(screen.getByText(/Trenger du \u00e5 endre et eksisterende svar/i));
     
     await user.click(screen.getByRole('button', { name: /Generer testtoken \(dev\)/i }));
 

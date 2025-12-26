@@ -29,7 +29,7 @@ test('token paste/use flow: generate token, apply it, and update RSVP', async ({
 
   // Visit RSVP page and expand token management section (Norwegian text)
   await page.goto(`${base}/rsvp`);
-  await page.click('text=Trenger du å endre eller kansellere');
+  await page.click('text=Trenger du å endre et eksisterende svar');
   await page.fill('input[placeholder="Lim inn token her"]', token);
   await page.click('button:has-text("Bruk token")');
 

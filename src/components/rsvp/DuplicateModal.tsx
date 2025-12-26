@@ -55,9 +55,6 @@ export function DuplicateModal({ existing, onEdit, onCancel, onCreateAnyway }: D
             <button type="button" onClick={() => onEdit(existing)} className="btn-primary text-sm">
               Endre dette svaret
             </button>
-            <button type="button" onClick={() => onCancel(existing.id)} className="btn-danger text-sm">
-              Slett svar
-            </button>
             <button type="button" onClick={onCreateAnyway} className="btn-secondary text-sm">
               Opprett nytt likevel
             </button>
