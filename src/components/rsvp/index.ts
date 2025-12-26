@@ -1,12 +1,13 @@
 /**
  * RSVP Form Components
  * 
- * Split from the monolithic RSVPForm.tsx for maintainability.
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party/group RSVPs)
+ * - Email is optional
+ * - No verification flow
  */
 
-export { GuestRow, type GuestRowProps, type PartyMember } from './GuestRow';
 export { AttendingSelector, type AttendingSelectorProps } from './AttendingSelector';
 export { DuplicateModal, type DuplicateModalProps, type ExistingRsvp } from './DuplicateModal';
-export { PartyList, type PartyListProps } from './PartyList';
 export { SuccessState, ErrorState, type SuccessStateProps, type FormStatus } from './FormStates';
 export { TokenManagement, type TokenManagementProps } from './TokenManagement';

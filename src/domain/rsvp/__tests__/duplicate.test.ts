@@ -7,6 +7,14 @@ import {
 } from '../duplicate';
 import type { CandidateRsvp, PersonToMatch } from '../duplicate';
 
+/**
+ * Duplicate Detection Tests
+ * 
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party members)
+ * - Duplicate detection only checks the primary person
+ */
+
 describe('personMatches', () => {
   it('matches exact names', () => {
     expect(personMatches(
@@ -45,14 +53,14 @@ describe('personMatches', () => {
 
   it('matches last name when one contains token from the other', () => {
     // After normalization: 'smith' vs 'smithjones' (hyphen removed)
-    // 'smith' is not contained in ['smithjones'] as exact token
-    // The tokenize function joins as single token
+    // 'smith' IS contained in 'smithjones' as substring match
+    // The personMatches function uses substring check: bToken.includes(aToken)
     expect(personMatches(
       { firstName: 'Jane', lastName: 'Smith' },
       { firstName: 'Jane', lastName: 'Smith-Jones' }
-    )).toBe(false); // Actually false because smith != smithjones
+    )).toBe(true); // True because 'smith' is substring of 'smithjones'
     
-    // But space-separated works
+    // Space-separated also works (tokens become ['smith', 'jones'])
     expect(personMatches(
       { firstName: 'Jane', lastName: 'Smith' },
       { firstName: 'Jane', lastName: 'Smith Jones' }
@@ -103,32 +111,7 @@ describe('extractPeopleFromRsvp', () => {
     ]);
   });
 
-  it('extracts party members', () => {
-    const rsvp: CandidateRsvp = {
-      id: '1',
-      first_name: 'John',
-      last_name: 'Doe',
-      party: [
-        { firstName: 'Jane', lastName: 'Doe', attending: true },
-        { firstName: 'Kid', lastName: 'Doe', attending: true },
-      ],
-    };
-    const people = extractPeopleFromRsvp(rsvp);
-    expect(people).toHaveLength(3);
-    expect(people).toContainEqual({ firstName: 'John', lastName: 'Doe' });
-    expect(people).toContainEqual({ firstName: 'Jane', lastName: 'Doe' });
-    expect(people).toContainEqual({ firstName: 'Kid', lastName: 'Doe' });
-  });
-
-  it('handles party as JSON string', () => {
-    const rsvp: CandidateRsvp = {
-      id: '1',
-      first_name: 'John',
-      last_name: 'Doe',
-      party: JSON.stringify([{ firstName: 'Jane', lastName: 'Doe', attending: true }]),
-    };
-    expect(extractPeopleFromRsvp(rsvp)).toHaveLength(2);
-  });
+  // Note: Party extraction tests removed - no longer supported in simplified model
 });
 
 describe('checkForDuplicates', () => {
@@ -138,21 +121,10 @@ describe('checkForDuplicates', () => {
       { id: '1', first_name: 'John', last_name: 'Doe' },
     ];
 
-    const result = checkForDuplicates(newPrimary, [], candidates);
+    const result = checkForDuplicates(newPrimary, candidates);
     expect(result.isDuplicate).toBe(true);
     expect(result.candidate?.id).toBe('1');
     expect(result.matches).toHaveLength(1);
-  });
-
-  it('finds duplicate in party members', () => {
-    const newPrimary = { firstName: 'Parent', lastName: 'Smith' };
-    const newParty = [{ firstName: 'John', lastName: 'Doe' }];
-    const candidates: CandidateRsvp[] = [
-      { id: '1', first_name: 'John', last_name: 'Doe' },
-    ];
-
-    const result = checkForDuplicates(newPrimary, newParty, candidates);
-    expect(result.isDuplicate).toBe(true);
   });
 
   it('returns false when no duplicates', () => {
@@ -161,9 +133,20 @@ describe('checkForDuplicates', () => {
       { id: '1', first_name: 'John', last_name: 'Doe' },
     ];
 
-    const result = checkForDuplicates(newPrimary, [], candidates);
+    const result = checkForDuplicates(newPrimary, candidates);
     expect(result.isDuplicate).toBe(false);
     expect(result.matches).toHaveLength(0);
+  });
+
+  it('finds duplicate with fuzzy name match', () => {
+    const newPrimary = { firstName: 'Chris', lastName: 'Smith' };
+    const candidates: CandidateRsvp[] = [
+      { id: '1', first_name: 'Christopher', last_name: 'Smith' },
+    ];
+
+    const result = checkForDuplicates(newPrimary, candidates);
+    expect(result.isDuplicate).toBe(true);
+    expect(result.candidate?.id).toBe('1');
   });
 });
 

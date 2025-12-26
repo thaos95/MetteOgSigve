@@ -4,6 +4,12 @@
  * 1. Runtime validation of API inputs
  * 2. Type inference (z.infer<typeof schema>)
  * 3. Consistent error messages
+ * 
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party/group RSVPs)
+ * - Email is optional
+ * - No verification flow for RSVP creation
+ * - Edit/cancel requires email-based token
  */
 
 import { z } from 'zod';
@@ -13,24 +19,9 @@ import { z } from 'zod';
 // ============================================================================
 
 /**
- * Party member schema (guest in someone's party).
- */
-export const partyMemberSchema = z.object({
-  firstName: z
-    .string()
-    .min(1, 'Fornavn er påkrevd')
-    .max(64, 'Fornavn må være 64 tegn eller mindre')
-    .transform(s => s.trim()),
-  lastName: z
-    .string()
-    .min(1, 'Etternavn er påkrevd')
-    .max(64, 'Etternavn må være 64 tegn eller mindre')
-    .transform(s => s.trim()),
-  attending: z.boolean(),
-});
-
-/**
  * Email schema with normalization.
+ * Email is OPTIONAL - guests can RSVP without providing email,
+ * but won't be able to edit/cancel without contacting hosts directly.
  */
 export const emailSchema = z
   .string()
@@ -38,7 +29,9 @@ export const emailSchema = z
   .max(320, 'E-post må være 320 tegn eller mindre')
   .transform(s => s.trim().toLowerCase())
   .optional()
-  .nullable();
+  .nullable()
+  .or(z.literal(''))
+  .transform(s => s === '' ? null : s);
 
 // ============================================================================
 // RSVP Input Schemas
@@ -46,6 +39,7 @@ export const emailSchema = z
 
 /**
  * Schema for creating a new RSVP.
+ * SIMPLIFIED: One person per RSVP, email optional.
  */
 export const createRsvpSchema = z.object({
   firstName: z
@@ -60,10 +54,6 @@ export const createRsvpSchema = z.object({
     .transform(s => s.trim()),
   email: emailSchema,
   attending: z.boolean(),
-  party: z
-    .array(partyMemberSchema)
-    .max(10, 'Maksimalt 10 gjester tillatt')
-    .default([]),
   notes: z
     .string()
     .max(1000, 'Melding må være 1000 tegn eller mindre')
@@ -78,6 +68,7 @@ export const createRsvpSchema = z.object({
 
 /**
  * Schema for updating an existing RSVP.
+ * SIMPLIFIED: No party field.
  */
 export const updateRsvpSchema = z.object({
   firstName: z
@@ -94,10 +85,6 @@ export const updateRsvpSchema = z.object({
     .optional(),
   email: emailSchema,
   attending: z.boolean().optional(),
-  party: z
-    .array(partyMemberSchema)
-    .max(10)
-    .optional(),
   notes: z
     .string()
     .max(1000)
@@ -113,10 +100,15 @@ export const updateRsvpSchema = z.object({
 // Token Schemas
 // ============================================================================
 
-export const tokenPurposeSchema = z.enum(['verify', 'edit', 'cancel']);
+/**
+ * Token purpose - 'verify' removed as verification flow is no longer used.
+ * Tokens are only used for edit/cancel operations.
+ */
+export const tokenPurposeSchema = z.enum(['edit', 'cancel']);
 
 /**
  * Schema for requesting a token.
+ * Requires email since tokens are sent via email.
  */
 export const requestTokenSchema = z.object({
   email: z.string().email().transform(s => s.trim().toLowerCase()).optional(),
@@ -143,40 +135,22 @@ export const adminAuthSchema = z.object({
 });
 
 /**
- * Schema for editing a guest in a party.
- */
-export const editGuestSchema = z.object({
-  password: z.string().min(1),
-  rsvpId: z.union([z.string(), z.number()]).transform(v => String(v)),
-  action: z.enum(['add', 'update', 'remove', 'move']),
-  index: z.number().int().min(0).optional(),
-  firstName: z.string().min(1).max(64).transform(s => s.trim()).optional(),
-  lastName: z.string().min(1).max(64).transform(s => s.trim()).optional(),
-  attending: z.boolean().optional(),
-  dir: z.enum(['up', 'down']).optional(),
-});
-
-/**
  * Schema for export filters.
+ * SIMPLIFIED: Removed include_unverified and include_party_rows as no longer relevant.
  */
 export const exportFiltersSchema = z.object({
   password: z.string().min(1),
   attending: z.enum(['all', 'yes', 'no']).default('all'),
   from: z.string().optional(),
   to: z.string().optional(),
-  include_unverified: z.boolean().default(false),
-  include_party_rows: z.boolean().default(false),
   person_name: z.string().optional(),
-  person_attending: z.enum(['', 'yes', 'no']).optional(),
 });
 
 // ============================================================================
 // Type Inference
 // ============================================================================
 
-export type PartyMemberInput = z.infer<typeof partyMemberSchema>;
 export type CreateRsvpInput = z.infer<typeof createRsvpSchema>;
 export type UpdateRsvpInput = z.infer<typeof updateRsvpSchema>;
 export type RequestTokenInput = z.infer<typeof requestTokenSchema>;
-export type EditGuestInput = z.infer<typeof editGuestSchema>;
 export type ExportFiltersInput = z.infer<typeof exportFiltersSchema>;

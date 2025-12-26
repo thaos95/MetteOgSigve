@@ -10,7 +10,8 @@ export interface TokenManagementProps {
 }
 
 /**
- * Collapsible section for managing edit/cancel tokens.
+ * Collapsible section for managing edit tokens.
+ * Users can request an edit link to update their RSVP.
  */
 export function TokenManagement({
   email,
@@ -23,14 +24,17 @@ export function TokenManagement({
   const [updateEmail, setUpdateEmail] = useState(false);
 
   async function requestToken() {
-    if (!email && !sendToEmail) {
-      alert("Vennligst skriv inn e-posten din først eller spesifiser en e-post å sende til");
+    // Use sendToEmail field first, fall back to form email
+    const emailToUse = sendToEmail.trim() || email.trim();
+    
+    if (!emailToUse) {
+      alert("Vennligst skriv inn e-postadressen din for å motta en endringslenke");
       return;
     }
     const recaptchaToken = await getRecaptchaToken("request-token");
-    const body: any = { email, purpose: "edit" };
+    const body: any = { email: emailToUse, purpose: "edit" };
     if (recaptchaToken) body.recaptchaToken = recaptchaToken;
-    if (sendToEmail) body.sendToEmail = sendToEmail;
+    if (sendToEmail && sendToEmail !== email) body.sendToEmail = sendToEmail;
     if (updateEmail) body.updateEmail = true;
     const deviceId = (() => {
       try {
@@ -116,21 +120,21 @@ export function TokenManagement({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        Trenger du å endre eller kansellere et eksisterende svar?
+        Trenger du å endre et eksisterende svar?
       </summary>
       <div className="mt-4 p-4 bg-cream/30 border border-soft-border rounded-lg space-y-4">
         <p className="text-sm text-warm-gray">
-          Skriv inn e-posten din for å motta en sikker endrings-/slettelenke. Du kan valgfritt spesifisere en annen adresse å sende lenken til.
+          Skriv inn e-postadressen din for å motta en sikker endringslenke.
         </p>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2 items-end">
             <div className="flex-1 min-w-[200px]">
               <label htmlFor="send-to-email" className="block text-sm font-medium text-primary mb-1">
-                Send lenke til e-post
+                E-postadresse <span className="text-error">*</span>
               </label>
               <input
                 id="send-to-email"
-                placeholder="epost@eksempel.no"
+                placeholder="din@epost.no"
                 value={sendToEmail}
                 onChange={(e) => setSendToEmail(e.target.value)}
                 className="input"
@@ -150,7 +154,7 @@ export function TokenManagement({
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={requestToken} className="btn-primary text-sm">
-              Be om endrings-/slettelenke
+              Be om endringslenke
             </button>
             {process.env.NODE_ENV !== "production" && (
               <button type="button" onClick={generateTestToken} className="btn-secondary text-sm">

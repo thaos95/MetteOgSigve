@@ -7,10 +7,23 @@ import crypto from 'crypto';
 const now = ()=>new Date().toISOString();
 const log = (...args: any[])=>console.log('[request-token]', now(), ...args);
 
+/**
+ * Token Request Endpoint
+ * 
+ * SIMPLIFIED MODEL (2024):
+ * - Only supports edit/cancel purposes (no 'verify')
+ * - Requires email to send token to
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     let { email, name, purpose } = body; // purpose: 'edit' | 'cancel'
+    
+    // Validate purpose - only edit/cancel allowed
+    if (purpose === 'verify') {
+      return NextResponse.json({ error: 'verify purpose no longer supported' }, { status: 400 });
+    }
+    
     if (!email && !name) return NextResponse.json({ error: 'email or name required' }, { status: 400 });
     // normalize email for lookups & rate-limit keys
     email = email ? String(email).trim().toLowerCase() : undefined;
@@ -77,17 +90,11 @@ export async function POST(req: Request) {
       const sendTo = body.sendToEmail ? String(body.sendToEmail).trim().toLowerCase() : email;
       if (sendTo) {
         const emailKey = `rl:sw:token:email:${sendTo}`;
-        const baseLimit = Number(process.env.RL_SW_TOKEN_EMAIL_LIMIT || 5);
-        const emailLimit = (rsv?.verified ? baseLimit * 2 : baseLimit);
+        const emailLimit = Number(process.env.RL_SW_TOKEN_EMAIL_LIMIT || 5);
         const rEmail = await slidingWindowLimit(emailKey, emailLimit, ipWindowMs);
         if (rEmail.limited) return NextResponse.json({ error: 'rate limit exceeded (email)' }, { status: 429, headers: { 'Retry-After': String(rEmail.retryAfter) } });
       }
     } catch (e) { console.error('rate limit check error', e); }
-
-    // POLICY: Allow edit/cancel token requests even for unverified RSVPs
-    // Rationale: Token delivery to the email inbox itself proves ownership.
-    // Rate limiting + CAPTCHA provide abuse protection.
-    // When the guest uses the edit token, we implicitly verify their RSVP.
 
     const token = crypto.randomBytes(20).toString('hex');
     const crypto2 = await import('crypto');
@@ -107,7 +114,7 @@ export async function POST(req: Request) {
       const { data: dup, error: dupErr } = await supabaseServer.from('rsvps').select('id').eq('email', sendTo).limit(1);
       if (dupErr) return NextResponse.json({ error: dupErr.message }, { status: 500 });
       if (dup && dup.length && dup[0].id !== rsv.id) return NextResponse.json({ error: 'email already in use by another RSVP' }, { status: 409 });
-      const { error: updErr } = await supabaseServer.from('rsvps').update({ email: sendTo, verified: false, updated_at: new Date().toISOString() }).eq('id', rsv.id);
+      const { error: updErr } = await supabaseServer.from('rsvps').update({ email: sendTo, updated_at: new Date().toISOString() }).eq('id', rsv.id);
       if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
       log('Updated RSVP email for rsvp_id', rsv.id, 'to', sendTo);
     }
