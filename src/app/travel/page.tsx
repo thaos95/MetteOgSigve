@@ -77,7 +77,7 @@ export default function Travel() {
             </div>
             
             <p className="text-warm-gray mb-4">
-              Botne kirke er en vakker middelalderkirke fra 1200-tallet, som ligger i rolige omgivelser like utenfor Holmestrand. Vielsen starter presis kl. 12:30, så vi ber gjester om å være ute i god tid.
+              Botne kirke er en vakker middelalderkirke fra 1200-tallet, som ligger i rolige omgivelser like utenfor Holmestrand. Vielsen starter presis kl. 12:30, så vi ber gjester om å være ute i god tid – senest 12:15.
             </p>
             
             <div className="bg-cream/50 rounded-lg p-4 border border-soft-border mb-4">
@@ -184,8 +184,8 @@ export default function Travel() {
               <h3 className="font-medium text-primary mb-2">Praktisk informasjon</h3>
               <ul className="text-warm-gray text-sm space-y-1">
                 <li>• Gratis parkering tilgjengelig like før hovedporten</li>
-                <li>• Deler av området er utendørs – vi anbefaler behagelige sko</li>
-                <li>• Skulpturparken er åpen og fri til å utforskes</li>
+                <li>• <b>Stillethæler er ikke tillatt</b> – hælbredde skal være større enn en 1-krone</li>
+                <li>• Fingermat og aperitiff serveres ved ankomst</li>
               </ul>
             </div>
             
@@ -243,7 +243,7 @@ export default function Travel() {
               Vi anbefaler å kjøre fra kirken kort tid etter vielsen for å ankomme Midtåsen fra kl. 14:30.
             </p>
             <p className="text-sm text-accent mt-2 italic">
-              Mer informasjon om transport kommer hvis det blir satt opp felles transport.
+              Hvis du trenger hjelp med transport eller samkjøring, ta gjerne kontakt med oss.
             </p>
           </div>
         </div>
@@ -258,7 +258,7 @@ export default function Travel() {
             </svg>
           </div>
           <div className="flex-1">
-            <h2 className="font-serif text-2xl text-primary mb-4">Slik kommer du deg hit</h2>
+            <h2 className="font-serif text-2xl text-primary mb-4">Reiseinformasjon</h2>
             <div className="space-y-6 text-warm-gray">
               <div>
                 <h3 className="font-medium text-primary mb-2 flex items-center gap-2">
@@ -268,7 +268,6 @@ export default function Travel() {
                   <li><strong>Sandefjord Lufthavn Torp (TRF)</strong> – ca. 15 minutter med bil til Midtåsen</li>
                   <li><strong>Oslo Lufthavn Gardermoen (OSL)</strong> – ca. 1,5–2 timer med bil eller tog</li>
                 </ul>
-                <p className="text-sm mt-2">Fra begge flyplasser kan du reise med leiebil, tog + taxi, eller taxi direkte.</p>
               </div>
               
               <div>
@@ -279,16 +278,6 @@ export default function Travel() {
                   <li><strong>Sandefjord stasjon</strong> – nært Midtåsen</li>
                   <li><strong>Holmestrand stasjon</strong> – nærmest Botne kirke</li>
                 </ul>
-                <p className="text-sm mt-2">Tog går ofte og er pålitelige. Taxi er tilgjengelig fra stasjonene.</p>
-              </div>
-              
-              <div>
-                <h3 className="font-medium text-primary mb-2 flex items-center gap-2">
-                  <span>🚗</span> Med bil
-                </h3>
-                <p className="text-sm">
-                  Sandefjord og Holmestrand er lett tilgjengelig med bil fra Oslo og andre deler av landet. Vi anbefaler Google Maps for veibeskrivelse.
-                </p>
               </div>
             </div>
           </div>
@@ -321,8 +310,9 @@ export default function Travel() {
               <div className="p-4 bg-cream/50 rounded-lg border border-soft-border">
                 <h3 className="font-medium text-primary mb-2">Andre alternativer i nærheten</h3>
                 <ul className="text-sm text-warm-gray space-y-1">
-                  <li>• Holmestrand & Åsgårdstrand (begrenset)</li>
-                  <li>• Tønsberg (kort kjøretur)</li>
+                  <li>• Holmestrand</li>
+                  <li>• Horten/Tønsberg (kort kjøretur)</li>
+                  <li>• Airbnb og ferieutleie</li>
                 </ul>
               </div>
             </div>

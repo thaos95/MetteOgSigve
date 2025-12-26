@@ -39,7 +39,7 @@ export default async function Home() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="font-serif text-xl text-primary mb-2 group-hover:text-primary-dark transition-colors">RSVP</h3>
+          <h3 className="font-serif text-xl text-primary mb-2 group-hover:text-primary-dark transition-colors">Invitasjon</h3>
           <p className="text-sm text-warm-gray">Gi beskjed om du kommer</p>
         </Link>
         <Link href="/travel" className="card text-center group hover:shadow-md transition-shadow">
