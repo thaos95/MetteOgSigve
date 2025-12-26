@@ -6,9 +6,18 @@ import { personMatches, checkForDuplicates, extractPeopleFromRsvp } from "../../
 import { AppError, errorResponse, zodToAppError, handleUnknownError, legacyErrorResponse } from "../../../lib/errors";
 import { applyRsvpRateLimits } from '../../../lib/rateLimit';
 import { verifyRecaptchaToken } from '../../../lib/recaptcha';
-import { verificationEmail, type RsvpData } from '../../../lib/emailTemplates';
+import { confirmationEmail, type RsvpData } from '../../../lib/emailTemplates';
 import type { ZodError } from 'zod';
 
+/**
+ * RSVP Creation Endpoint
+ * 
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party/group RSVPs)
+ * - Email is optional
+ * - No verification flow - RSVPs are immediately confirmed
+ * - Confirmation email sent only if email provided
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -29,7 +38,7 @@ export async function POST(req: Request) {
       return errorResponse(zodToAppError(parseResult.error as ZodError));
     }
     
-    const { firstName, lastName, email, attending, party, notes, recaptchaToken, overrideDuplicate } = parseResult.data;
+    const { firstName, lastName, email, attending, notes, recaptchaToken, overrideDuplicate } = parseResult.data;
 
     // ─────────────────────────────────────────────────────────────────────────
     // 2. CAPTCHA verification
@@ -94,8 +103,8 @@ export async function POST(req: Request) {
           candidates.push(...(res2.data || []));
         }
 
-        // Use domain module for duplicate detection
-        const duplicateResult = checkForDuplicates(primary, party, candidates);
+        // Use domain module for duplicate detection (simplified - no party)
+        const duplicateResult = checkForDuplicates(primary, candidates);
         if (duplicateResult.isDuplicate && duplicateResult.candidate) {
           // Return possible duplicate with existing record for UI to prompt
           return NextResponse.json({ 
@@ -110,10 +119,19 @@ export async function POST(req: Request) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 5. Insert RSVP
+    // 5. Insert RSVP (always verified, no party)
     // ─────────────────────────────────────────────────────────────────────────
     const fullName = `${firstName} ${lastName}`;
-    const insertObj: any = { name: fullName, first_name: firstName, last_name: lastName, email, attending, notes, verified: false, party };
+    const insertObj: any = { 
+      name: fullName, 
+      first_name: firstName, 
+      last_name: lastName, 
+      email: email || null, 
+      attending, 
+      notes, 
+      verified: true,  // Always verified in simplified model
+      party: []        // Always empty - one person per RSVP
+    };
     let inserted: any = null;
     let insertErr: any = null;
     try {
@@ -129,7 +147,7 @@ export async function POST(req: Request) {
       const msg = String(insertErr?.message || insertErr);
       if (msg.includes('first_name') || msg.includes('last_name') || msg.includes('party')) {
         console.warn('Insert failed likely due to missing migration columns; retrying legacy insert');
-        const legacyObj: any = { name: fullName, email, attending, notes, verified: false };
+        const legacyObj: any = { name: fullName, email: email || null, attending, notes, verified: true };
         const res2 = await supabaseServer.from('rsvps').insert(legacyObj).select('*');
         if (res2.error) return legacyErrorResponse(res2.error.message, 500);
         inserted = res2.data;
@@ -138,41 +156,24 @@ export async function POST(req: Request) {
       }
     }
 
-    // If an email was provided, create a verification token (hashed in DB) and email the raw token to user
+    // ─────────────────────────────────────────────────────────────────────────
+    // 6. Send confirmation email (only if email provided)
+    // ─────────────────────────────────────────────────────────────────────────
     try {
       if (email) {
-        const crypto = await import('crypto');
-        const token = crypto.randomBytes(20).toString('hex');
-        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-        const expires_at = new Date(Date.now() + 1000 * 60 * 60).toISOString(); // 1 hour
-
-        const { error: insertErr } = await supabaseServer.from('rsvp_tokens').insert({ rsvp_id: inserted?.[0].id, token_hash: tokenHash, purpose: 'verify', expires_at }).select('*');
-        if (insertErr) console.error('Token insert error', insertErr);
-
-        // For local testing, log the raw token (do not enable in production)
-        if (process.env.NODE_ENV !== 'production') console.log('DEV verify token:', token);
-
         const mod = await import('../../../lib/mail');
         const sendMail = mod?.sendMail;
         const getBaseUrl = mod?.getBaseUrl;
-        const link = `${getBaseUrl?.() ?? ''}/rsvp?token=${token}`;
-        
-        // Build RSVP summary for email template
-        const guestList = (Array.isArray(party) && party.length > 0) 
-          ? party.map((p:any)=>`${p.firstName||p.first_name||''} ${p.lastName||p.last_name||''}`.trim()).filter(Boolean).join(', ') 
-          : '';
         
         const rsvpSummary: RsvpData = {
           name: fullName,
           attending: attending,
-          guestList,
           notes: notes ?? undefined,
         };
         
-        // Generate email using template
-        const emailContent = verificationEmail({
+        // Generate confirmation email (not verification - RSVP is already confirmed)
+        const emailContent = confirmationEmail({
           name: firstName,
-          verifyLink: link,
           rsvpSummary,
         });
         

@@ -1,13 +1,16 @@
 /**
  * Fuzzy duplicate detection logic for RSVP submissions.
  * Pure functions - no I/O, testable in isolation.
+ * 
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party members to check)
+ * - Duplicate detection based on email OR fuzzy name match
  */
 
-import type { PartyMember } from './types';
 import { normalizeName, tokenizeName } from './validation';
 
 /**
- * A person to match (either primary or party member).
+ * A person to match.
  */
 export type PersonToMatch = {
   firstName: string;
@@ -23,7 +26,6 @@ export type CandidateRsvp = {
   name?: string;
   first_name?: string;
   last_name?: string;
-  party?: PartyMember[] | string | null;
 };
 
 /**
@@ -88,7 +90,7 @@ function firstNameTokenMatches(a: string, b: string): boolean {
 }
 
 /**
- * Extract all people from an RSVP (primary + party members).
+ * Extract the person from an RSVP (just the primary person, no party).
  */
 export function extractPeopleFromRsvp(rsvp: CandidateRsvp): PersonToMatch[] {
   const people: PersonToMatch[] = [];
@@ -98,38 +100,18 @@ export function extractPeopleFromRsvp(rsvp: CandidateRsvp): PersonToMatch[] {
   const lastName = rsvp.last_name || (rsvp.name ? rsvp.name.split(/\s+/).slice(-1).join(' ') || '' : '');
   people.push({ firstName, lastName });
 
-  // Party members
-  let party: PartyMember[] = [];
-  try {
-    if (Array.isArray(rsvp.party)) {
-      party = rsvp.party;
-    } else if (typeof rsvp.party === 'string' && rsvp.party) {
-      party = JSON.parse(rsvp.party);
-    }
-  } catch {
-    // Ignore parsing errors
-  }
-
-  if (Array.isArray(party)) {
-    for (const p of party) {
-      people.push({ firstName: p.firstName || '', lastName: p.lastName || '' });
-    }
-  }
-
   return people;
 }
 
 /**
  * Check if a new submission might be a duplicate of an existing RSVP.
+ * SIMPLIFIED: Only checks primary person (no party members).
  * Returns the first candidate that has person overlap.
  */
 export function checkForDuplicates(
   newPrimary: PersonToMatch,
-  newParty: PersonToMatch[],
   candidates: CandidateRsvp[]
 ): DuplicateCheckResult {
-  const newPeople = [newPrimary, ...newParty];
-
   // Dedupe candidates by ID
   const uniqueCandidates = deduplicateCandidates(candidates);
 
@@ -137,11 +119,9 @@ export function checkForDuplicates(
     const existingPeople = extractPeopleFromRsvp(candidate);
     const matches: Array<{ newPerson: PersonToMatch; existingPerson: PersonToMatch }> = [];
 
-    for (const newPerson of newPeople) {
-      for (const existingPerson of existingPeople) {
-        if (personMatches(newPerson, existingPerson)) {
-          matches.push({ newPerson, existingPerson });
-        }
+    for (const existingPerson of existingPeople) {
+      if (personMatches(newPrimary, existingPerson)) {
+        matches.push({ newPerson: newPrimary, existingPerson });
       }
     }
 

@@ -9,7 +9,7 @@ test('token paste/use flow: generate token, apply it, and update RSVP', async ({
   const ts = Date.now();
   const deviceId = `playwright-token-${ts}`;
   const email = `token+${ts}@example.com`;
-  const payload = { firstName: 'Token', lastName: `User${ts}`, email, attending: true, party: [], notes: 'Initial notes' };
+  const payload = { firstName: 'Token', lastName: `User${ts}`, email, attending: true, notes: 'Initial notes' };
 
   const create = await request.post(`${base}/api/rsvp`, { data: payload, headers: { 'x-device-id': deviceId } });
   expect(create.ok()).toBeTruthy();
@@ -27,23 +27,23 @@ test('token paste/use flow: generate token, apply it, and update RSVP', async ({
   expect(genJson.token).toBeTruthy();
   const token = genJson.token;
 
-  // Visit RSVP page and expand token management section
+  // Visit RSVP page and expand token management section (Norwegian text)
   await page.goto(`${base}/rsvp`);
-  await page.click('text=Need to edit or cancel an existing RSVP?');
-  await page.fill('input[placeholder="Paste token here"]', token);
-  await page.click('button:has-text("Use token")');
+  await page.click('text=Trenger du å endre eller kansellere');
+  await page.fill('input[placeholder="Lim inn token her"]', token);
+  await page.click('button:has-text("Bruk token")');
 
-  // form should be populated with returned RSVP info
-  await expect(page.getByLabel('First name')).toHaveValue('Token');
-  await expect(page.getByLabel('Last name')).toHaveValue(`User${ts}`);
-  // use exact label match to avoid matching other labels that contain 'email'
-  await expect(page.getByLabel('Email', { exact: true })).toHaveValue(email);
+  // form should be populated with returned RSVP info (Norwegian labels)
+  await expect(page.getByLabel('Fornavn')).toHaveValue('Token');
+  await expect(page.getByLabel('Etternavn')).toHaveValue(`User${ts}`);
+  // use the specific email input by id
+  await expect(page.locator('#email')).toHaveValue(email);
 
   // modify a field and submit update
   await page.fill('textarea', 'Updated via E2E');
   // wait for the PUT /api/rsvp/:id response and verify success
   const putRespPromise = page.waitForResponse(r => r.url().includes('/api/rsvp/') && r.request().method() === 'PUT');
-  await page.click('button:has-text("Update RSVP")');
+  await page.click('button:has-text("Oppdater svar")');
   const putResp = await putRespPromise;
   expect(putResp.ok()).toBeTruthy();
   const putJson = await putResp.json();

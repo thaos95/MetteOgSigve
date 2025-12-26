@@ -189,13 +189,13 @@ function eventDetailsSection(): string {
 export interface RsvpData {
   name: string;
   attending: boolean;
-  guestList: string;
   notes?: string;
 }
 
 /**
  * RSVP Verification Email
- * Sent after RSVP submission to verify email ownership
+ * @deprecated No longer used - kept for backward compatibility
+ * RSVPs are now confirmed immediately without email verification
  */
 export function verificationEmail(data: { name: string; verifyLink: string; rsvpSummary: RsvpData }) {
   const { name, verifyLink, rsvpSummary } = data;
@@ -226,11 +226,6 @@ export function verificationEmail(data: { name: string; verifyLink: string; rsvp
               <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Svar:</td>
               <td style="padding: 4px 0; font-weight: 500;">${rsvpSummary.attending ? '✓ Kommer' : '✗ Kan ikke komme'}</td>
             </tr>
-            ${rsvpSummary.attending && rsvpSummary.guestList ? `
-            <tr>
-              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Gjester:</td>
-              <td style="padding: 4px 0;">${rsvpSummary.guestList}</td>
-            </tr>` : ''}
             ${rsvpSummary.notes ? `
             <tr>
               <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted}; vertical-align: top;">Melding:</td>
@@ -272,7 +267,6 @@ Denne lenken utløper om 1 time.
 OPPSUMMERING AV DITT SVAR
 -----------------
 Svar: ${rsvpSummary.attending ? 'Kommer' : 'Kan ikke komme'}
-${rsvpSummary.attending && rsvpSummary.guestList ? `Gjester: ${rsvpSummary.guestList}` : ''}
 ${rsvpSummary.notes ? `Melding: ${rsvpSummary.notes}` : ''}
 
 BRYLLUPET
@@ -302,6 +296,118 @@ ${weddingConfig.couple.emailSignature}`;
 
   return {
     subject: `${weddingConfig.email.subjectPrefix} — Vennligst bekreft ditt svar`,
+    html,
+    text,
+  };
+}
+
+/**
+ * RSVP Confirmation Email
+ * Sent immediately after RSVP submission (no verification required)
+ */
+export function confirmationEmail(data: { name: string; rsvpSummary: RsvpData }) {
+  const { name, rsvpSummary } = data;
+  const baseUrl = getBaseUrl();
+  
+  const html = emailLayout(`
+    <p style="margin: 0 0 16px; font-size: 16px; color: ${colors.text};">
+      Hei ${name},
+    </p>
+    
+    <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.text}; line-height: 1.6;">
+      Takk for ditt svar! Vi har mottatt din påmelding${rsvpSummary.attending ? ' og gleder oss til å se deg!' : '.'}
+    </p>
+    
+    <!-- RSVP Summary -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding: 16px; background-color: ${colors.background}; border-radius: 6px;">
+      <tr>
+        <td>
+          <p style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: ${colors.primary};">Ditt svar</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="font-size: 14px; color: ${colors.text};">
+            <tr>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Navn:</td>
+              <td style="padding: 4px 0; font-weight: 500;">${rsvpSummary.name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Svar:</td>
+              <td style="padding: 4px 0; font-weight: 500;">${rsvpSummary.attending ? '✓ Kommer' : '✗ Kan ikke komme'}</td>
+            </tr>
+            ${rsvpSummary.notes ? `
+            <tr>
+              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted}; vertical-align: top;">Melding:</td>
+              <td style="padding: 4px 0;">${rsvpSummary.notes}</td>
+            </tr>` : ''}
+          </table>
+        </td>
+      </tr>
+    </table>
+    
+    ${rsvpSummary.attending ? `
+    <!-- Event Details -->
+    ${eventDetailsSection()}
+    
+    <!-- Practical Info -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
+      <tr>
+        <td>
+          <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: ${colors.primary};">Praktisk informasjon</p>
+          <ul style="margin: 0; padding: 0 0 0 20px; font-size: 14px; color: ${colors.text}; line-height: 1.8;">
+            <li>Vennligst møt opp ved kirken senest kl. 12:15</li>
+            <li>Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet</li>
+            <li>Parkering er tilgjengelig på begge steder</li>
+          </ul>
+          <p style="margin: 12px 0 0;">
+            <a href="${baseUrl}/travel" style="font-size: 14px; color: ${colors.primary}; text-decoration: underline;">Se all informasjon om reise og overnatting →</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
+    
+    <p style="margin: 24px 0 0; font-size: 14px; color: ${colors.textMuted};">
+      Trenger du å endre svaret ditt? Besøk <a href="${baseUrl}/rsvp" style="color: ${colors.primary}; text-decoration: underline;">svarsiden</a> og be om en endringslenke.
+    </p>
+  `, { preheader: rsvpSummary.attending ? `Takk for ditt svar! Vi gleder oss til å se deg.` : `Takk for at du ga beskjed.` });
+  
+  const text = `Hei ${name},
+
+Takk for ditt svar! Vi har mottatt din påmelding${rsvpSummary.attending ? ' og gleder oss til å se deg!' : '.'}
+
+DITT SVAR
+-----------------
+Navn: ${rsvpSummary.name}
+Svar: ${rsvpSummary.attending ? 'Kommer' : 'Kan ikke komme'}
+${rsvpSummary.notes ? `Melding: ${rsvpSummary.notes}` : ''}
+${rsvpSummary.attending ? `
+BRYLLUPET
+-----------
+${weddingConfig.date.full}
+
+Vielse kl. ${weddingConfig.ceremony.time}
+${weddingConfig.ceremony.nameNorwegian}
+${formatAddress(weddingConfig.ceremony)}
+Kart: ${weddingConfig.ceremony.mapsUrl}
+
+Feiring fra kl. ${weddingConfig.venue.time}
+${weddingConfig.venue.name}
+${formatAddress(weddingConfig.venue)}
+Kart: ${weddingConfig.venue.mapsUrl}
+
+PRAKTISK INFO
+--------------
+• Vennligst møt opp ved kirken senest kl. 12:15
+• Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet
+• Parkering er tilgjengelig på begge steder
+
+Mer info: ${baseUrl}/travel
+` : ''}
+Trenger du å endre svaret ditt? Besøk: ${baseUrl}/rsvp
+
+Hilsen,
+${weddingConfig.couple.emailSignature}`;
+
+  return {
+    subject: `${weddingConfig.email.subjectPrefix} — ${rsvpSummary.attending ? 'Vi har mottatt ditt svar!' : 'Takk for beskjed'}`,
     html,
     text,
   };
@@ -376,11 +482,6 @@ export function updateConfirmationEmail(data: { name: string; rsvpSummary: RsvpD
               <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Svar:</td>
               <td style="padding: 4px 0; font-weight: 500;">${rsvpSummary.attending ? '✓ Kommer' : '✗ Kan ikke komme'}</td>
             </tr>
-            ${rsvpSummary.attending && rsvpSummary.guestList ? `
-            <tr>
-              <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted};">Gjester:</td>
-              <td style="padding: 4px 0;">${rsvpSummary.guestList}</td>
-            </tr>` : ''}
             ${rsvpSummary.notes ? `
             <tr>
               <td style="padding: 4px 16px 4px 0; color: ${colors.textMuted}; vertical-align: top;">Melding:</td>
@@ -403,7 +504,6 @@ Svaret ditt er oppdatert.
 DITT OPPDATERTE SVAR
 -----------------
 Svar: ${rsvpSummary.attending ? 'Kommer' : 'Kan ikke komme'}
-${rsvpSummary.attending && rsvpSummary.guestList ? `Gjester: ${rsvpSummary.guestList}` : ''}
 ${rsvpSummary.notes ? `Melding: ${rsvpSummary.notes}` : ''}
 
 Trenger du å gjøre flere endringer? Besøk: ${baseUrl}/rsvp

@@ -1,8 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { AttendingSelector } from "./rsvp/AttendingSelector";
-import { PartyList } from "./rsvp/PartyList";
-import { GuestRow, type PartyMember } from "./rsvp/GuestRow";
 import { DuplicateModal, type ExistingRsvp } from "./rsvp/DuplicateModal";
 import { SuccessState, ErrorState, type FormStatus } from "./rsvp/FormStates";
 import { TokenManagement } from "./rsvp/TokenManagement";
@@ -10,13 +8,10 @@ import { TokenManagement } from "./rsvp/TokenManagement";
 /**
  * Main RSVP submission form.
  * 
- * Refactored to use sub-components for maintainability.
- * Previously 492 lines, now delegates to:
- * - AttendingSelector (attendance radio)
- * - PartyList (guest list management)
- * - DuplicateModal (duplicate RSVP warning)
- * - FormStates (success/error states)
- * - TokenManagement (edit token handling)
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party/group RSVPs)
+ * - Email is optional
+ * - No verification flow - RSVPs are immediately confirmed
  */
 export default function RSVPForm() {
   // Form state
@@ -24,7 +19,6 @@ export default function RSVPForm() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [attending, setAttending] = useState(true);
-  const [party, setParty] = useState<PartyMember[]>([]);
   const [notes, setNotes] = useState("");
   
   // UI state
@@ -98,7 +92,6 @@ export default function RSVPForm() {
     setLastName(r.last_name ?? (r.name ? String(r.name).split(/\s+/).slice(-1).join(" ") : ""));
     setEmail(r.email ?? "");
     setAttending(!!r.attending);
-    setParty(Array.isArray(r.party) ? r.party : r.party ? JSON.parse(r.party) : []);
     setNotes(r.notes ?? "");
   }
 
@@ -114,9 +107,8 @@ export default function RSVPForm() {
       const payload: any = editId ? { id: editId, token: tokenToUse } : {};
       payload.firstName = firstName;
       payload.lastName = lastName;
-      payload.email = email;
+      payload.email = email || null;
       payload.attending = attending;
-      payload.party = party;
       payload.notes = notes;
       if (recaptchaToken) payload.recaptchaToken = recaptchaToken;
 
@@ -238,7 +230,7 @@ export default function RSVPForm() {
 
   async function createNewAnyway() {
     try {
-      const payload: any = { firstName, lastName, email, attending, party, notes, overrideDuplicate: true };
+      const payload: any = { firstName, lastName, email: email || null, attending, notes, overrideDuplicate: true };
       const deviceId = (() => {
         try {
           return localStorage.getItem("__device_id");
@@ -260,23 +252,6 @@ export default function RSVPForm() {
       alert("Feilet");
     }
   }
-
-  // Party management handlers
-  const handleUpdateGuest = (index: number, updates: Partial<PartyMember>) => {
-    setParty(party.map((p, i) => (i === index ? { ...p, ...updates } : p)));
-  };
-
-  const handleRemoveGuest = (index: number) => {
-    setParty(party.filter((_, i) => i !== index));
-  };
-
-  const handleAddGuest = () => {
-    setParty([...party, { firstName: "", lastName: "", attending: true }]);
-  };
-
-  const handleSetAllAttending = (attending: boolean) => {
-    setParty(party.map((p) => ({ ...p, attending })));
-  };
 
   // Token applied from TokenManagement
   const handleTokenApplied = (rsvp: any) => {
@@ -327,7 +302,7 @@ export default function RSVPForm() {
           {/* Email Field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-primary mb-2">
-              E-post
+              E-post <span className="font-normal text-warm-gray">(valgfritt)</span>
             </label>
             <input
               id="email"
@@ -337,19 +312,13 @@ export default function RSVPForm() {
               type="email"
               placeholder="din@epost.no"
             />
+            <p className="mt-1 text-xs text-warm-gray">
+              Med e-post kan du få bekreftelse og endre svaret ditt senere.
+            </p>
           </div>
 
           {/* Attending Radio Group */}
           <AttendingSelector attending={attending} onChange={setAttending} />
-
-          {/* Additional Guests */}
-          <PartyList
-            party={party}
-            onUpdate={handleUpdateGuest}
-            onRemove={handleRemoveGuest}
-            onAdd={handleAddGuest}
-            onSetAll={handleSetAllAttending}
-          />
 
           {/* Notes */}
           <div>

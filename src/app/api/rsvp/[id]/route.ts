@@ -77,16 +77,12 @@ export async function PUT(req: Request, ctx: any) {
         const mod = await import('../../../../lib/mail');
         const sendAsync = mod?.sendMailAsync ?? (mod?.sendMail ? (o: any) => mod.sendMail(o).then(res => { if (!res?.ok) console.error('Mail send failed (sync fallback)', res); }).catch(e => console.error('Mail send error (sync fallback)', e)) : null);
         if (typeof sendAsync === 'function') {
-          // Build RSVP summary for email template
+          // Build RSVP summary for email template (simplified - no party members)
           const updatedData = data?.[0];
-          const guestList = (Array.isArray(updatedData?.party) && updatedData.party.length > 0) 
-            ? updatedData.party.map((p:any)=>`${p.firstName||p.first_name||''} ${p.lastName||p.last_name||''}`.trim()).filter(Boolean).join(', ') 
-            : '';
           
           const rsvpSummary: RsvpData = {
             name: updatedData?.name || `${firstName} ${lastName}`,
             attending: updatedData?.attending ?? attending ?? true,
-            guestList,
             notes: updatedData?.notes ?? notes,
           };
           

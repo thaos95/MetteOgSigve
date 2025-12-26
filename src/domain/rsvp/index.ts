@@ -5,13 +5,17 @@
  * for the RSVP system. It has NO dependencies on infrastructure (Supabase,
  * Redis, etc.) or frameworks (Next.js).
  * 
+ * SIMPLIFIED MODEL (2024):
+ * - One person per RSVP (no party members)
+ * - Email is optional
+ * - No verification flow
+ * 
  * Usage:
  *   import { Rsvp, createRsvpSchema } from '@/domain/rsvp';
  */
 
 // Types (domain entities)
 export type {
-  PartyMember,
   Rsvp,
   CreateRsvpInput,
   UpdateRsvpInput,
@@ -24,21 +28,17 @@ export type {
 
 // Validation schemas (Zod)
 export {
-  partyMemberSchema,
   emailSchema,
   createRsvpSchema,
   updateRsvpSchema,
   tokenPurposeSchema,
   requestTokenSchema,
   adminAuthSchema,
-  editGuestSchema,
   exportFiltersSchema,
 } from './schema';
 
 // Schema-inferred types (for when you need the validated input shape)
 export type {
-  PartyMemberInput,
-  EditGuestInput,
   ExportFiltersInput,
 } from './schema';
 

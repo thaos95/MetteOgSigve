@@ -10,20 +10,23 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
   const rnd = Math.random().toString(36).slice(2,8);
   const deviceId = `playwright-audit-${ts}-${rnd}`;
   const email = `auditui+${ts}-${rnd}@example.com`;
-  const payload = { firstName: 'AuditUI', lastName: `Party${ts}-${rnd}`, email, attending: false, party: [] };
+  const uniqueName = `AuditUI${ts}${rnd}`;
+  const payload = { firstName: uniqueName, lastName: `Party${ts}-${rnd}`, email, attending: false };
 
-  // Create RSVP
+  // Create RSVP with attending: false
   const create = await request.post(`${base}/api/rsvp`, { data: payload, headers: { 'x-device-id': deviceId } });
   if (!create.ok()) { const txt = await create.text(); console.error('Create RSVP failed:', create.status(), txt); }
   expect(create.ok()).toBeTruthy();
   const created = await create.json();
   const rsvpId = created.rsvp.id;
 
-  // Trigger admin action: add guest via API (NewG)
-  const add = await request.post(`${base}/api/admin/edit-guest`, { data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', rsvpId, action: 'add', firstName: 'NewG', lastName: 'Added', attending: true } });
-  expect(add.ok()).toBeTruthy();
+  // Trigger admin action: update attending status to true (note: notes aren't updated by this endpoint)
+  const update = await request.post(`${base}/api/admin/update-person`, { 
+    data: { password: process.env.ADMIN_PASSWORD || 'metteogsigve', rsvpId, target: 'primary', attending: true } 
+  });
+  expect(update.ok()).toBeTruthy();
 
-  // Wait for audit log entry to be available via API (poll) and assert it references NewG in 'after'
+  // Wait for audit log entry to be available via API (poll) - look for attending: true in after
   let found = false;
   for (let i = 0; i < 20; i++) {
     const logsRes = await request.post(`${base}/api/admin/audit-logs`, {
@@ -35,10 +38,11 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
     }
     const js = await logsRes.json();
     const logs = js.logs || [];
-    if (logs.some((l:any) => l.action === 'add-guest' && JSON.stringify(l.after || '').includes('NewG'))) { found = true; break; }
+    // Look for update-attending action with attending: true in after data
+    if (logs.some((l:any) => l.action === 'update-attending' && l.after?.attending === true)) { found = true; break; }
     await new Promise(r => setTimeout(r, 300));
   }
-  expect(found, 'expected add-guest audit log with NewG to appear').toBeTruthy();
+  expect(found, 'expected update-attending audit log with attending: true to appear').toBeTruthy();
 
   // Open admin UI
   await page.goto(`${base}/admin`);
@@ -57,7 +61,7 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
 
   const filterInput = modal.locator('input[placeholder="Filter action"]').first();
   await expect(filterInput).toBeVisible();
-  await filterInput.fill('add-guest');
+  await filterInput.fill('update-attending');
 
   const filterBtn = modal.getByRole('button', { name: 'Filter' }).first();
   // Click via evaluate to avoid pointer interception flakiness in test env
@@ -73,10 +77,10 @@ test('audit logs modal displays recent admin actions and detail view', async ({ 
   await expect(prev).toBeVisible();
   await expect(prev).toBeDisabled();
 
-  // View details and assert the after JSON includes the guest name
+  // View details and assert the after JSON shows attending: true (uniqueName helps identify correct record)
   // use evaluate click to avoid pointer interception flakiness
   await row.locator('button:has-text("View")').evaluate((el: any) => el.click());
   await expect(page.locator('text=Audit detail')).toBeVisible();
-  // Find any pre block that contains NewG (the after data)
-  await expect(page.locator('pre').filter({ hasText: 'NewG' }).first()).toBeVisible();
+  // Find any pre block that contains the unique name (confirming we have the right record)
+  await expect(page.locator('pre').filter({ hasText: uniqueName }).first()).toBeVisible();
 });

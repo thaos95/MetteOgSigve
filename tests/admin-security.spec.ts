@@ -6,7 +6,6 @@ test.describe('Admin API security', () => {
   test('all admin endpoints reject requests without password', async ({ request }) => {
     const endpoints = [
       { url: '/api/admin/rsvps', method: 'POST', body: {} },
-      { url: '/api/admin/edit-guest', method: 'POST', body: { rsvpId: '123', action: 'add' } },
       { url: '/api/admin/update-person', method: 'POST', body: { rsvpId: '123', target: 'primary', attending: true } },
       { url: '/api/admin/export-rsvps', method: 'POST', body: {} },
       { url: '/api/admin/email-rsvps', method: 'POST', body: { to: 'test@example.com' } },
@@ -29,7 +28,6 @@ test.describe('Admin API security', () => {
   test('all admin endpoints reject requests with wrong password', async ({ request }) => {
     const endpoints = [
       { url: '/api/admin/rsvps', body: { password: 'wrongpassword' } },
-      { url: '/api/admin/edit-guest', body: { password: 'wrongpassword', rsvpId: '123', action: 'add' } },
       { url: '/api/admin/update-person', body: { password: 'wrongpassword', rsvpId: '123', target: 'primary', attending: true } },
       { url: '/api/admin/export-rsvps', body: { password: 'wrongpassword' } },
       { url: '/api/admin/email-rsvps', body: { password: 'wrongpassword', to: 'test@example.com' } },
@@ -94,17 +92,17 @@ test.describe('Admin API security', () => {
 
     // Create a test RSVP
     const create = await request.post(`${base}/api/rsvp`, {
-      data: { firstName: 'AuditSec', lastName: `Test${ts}`, email: `auditsec+${ts}@example.com`, attending: true, party: [] },
+      data: { firstName: 'AuditSec', lastName: `Test${ts}`, email: `auditsec+${ts}@example.com`, attending: true },
       headers: { 'x-device-id': deviceId }
     });
     expect(create.ok()).toBeTruthy();
     const rsvpId = (await create.json()).rsvp.id;
 
-    // Perform admin action
-    const edit = await request.post(`${base}/api/admin/edit-guest`, {
-      data: { password, rsvpId, action: 'add', firstName: 'NewPerson', lastName: 'Test', attending: true }
+    // Perform admin action - update person (simplified model, no edit-guest)
+    const update = await request.post(`${base}/api/admin/update-person`, {
+      data: { password, rsvpId, target: 'primary', attending: false, notes: 'Changed via test' }
     });
-    expect(edit.ok()).toBeTruthy();
+    expect(update.ok()).toBeTruthy();
 
     // Verify audit log was created
     const logs = await request.post(`${base}/api/admin/audit-logs`, {
@@ -114,10 +112,10 @@ test.describe('Admin API security', () => {
     const logsJson = await logs.json();
     expect(logsJson.logs.length).toBeGreaterThan(0);
     
-    const addGuestLog = logsJson.logs.find((l: any) => l.action === 'add-guest');
-    expect(addGuestLog).toBeTruthy();
-    expect(addGuestLog.target_table).toBe('rsvps');
-    expect(addGuestLog.before).toBeTruthy();
-    expect(addGuestLog.after).toBeTruthy();
+    const updateLog = logsJson.logs.find((l: any) => l.action === 'update-attending');
+    expect(updateLog).toBeTruthy();
+    expect(updateLog.target_table).toBe('rsvps');
+    expect(updateLog.before).toBeTruthy();
+    expect(updateLog.after).toBeTruthy();
   });
 });
