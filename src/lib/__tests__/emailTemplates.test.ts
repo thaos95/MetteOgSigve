@@ -216,7 +216,7 @@ describe('Email Templates', () => {
         rsvpSummary: mockRsvpSummary,
       });
 
-      expect(email.subject).toContain('oppdatert');
+      expect(email.subject).toContain('Vi gleder oss til å se deg');
       expect(email.html).toContain('Svaret ditt er oppdatert');
       expect(email.text).toContain('Svaret ditt er oppdatert');
     });
@@ -239,6 +239,40 @@ describe('Email Templates', () => {
 
       expect(email.html).toContain('/rsvp');
       expect(email.text).toContain('/rsvp');
+    });
+
+    it('includes venue details when attending', () => {
+      const email = updateConfirmationEmail({
+        name: 'David',
+        rsvpSummary: { name: 'David', attending: true },
+      });
+
+      expect(email.html).toContain(weddingConfig.ceremony.nameNorwegian);
+      expect(email.html).toContain(weddingConfig.venue.name);
+      expect(email.text).toContain(weddingConfig.ceremony.nameNorwegian);
+      expect(email.text).toContain(weddingConfig.venue.name);
+    });
+
+    it('includes practical information when attending', () => {
+      const email = updateConfirmationEmail({
+        name: 'David',
+        rsvpSummary: { name: 'David', attending: true },
+      });
+
+      expect(email.html).toContain('Praktisk informasjon');
+      expect(email.html).toContain('kirken');
+      expect(email.text).toContain('PRAKTISK INFO');
+    });
+
+    it('does not include venue details when not attending', () => {
+      const email = updateConfirmationEmail({
+        name: 'David',
+        rsvpSummary: { name: 'David', attending: false },
+      });
+
+      expect(email.html).not.toContain(weddingConfig.ceremony.nameNorwegian);
+      expect(email.html).not.toContain('Praktisk informasjon');
+      expect(email.subject).toContain('Svar oppdatert');
     });
   });
 

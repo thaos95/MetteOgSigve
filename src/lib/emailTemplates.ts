@@ -470,7 +470,7 @@ export function updateConfirmationEmail(data: { name: string; rsvpSummary: RsvpD
     </p>
     
     <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.text}; line-height: 1.6;">
-      Svaret ditt er oppdatert. Her er din oppdaterte status:
+      Svaret ditt er oppdatert${rsvpSummary.attending ? ' — vi gleder oss til å se deg!' : '.'}
     </p>
     
     <!-- RSVP Summary -->
@@ -492,27 +492,71 @@ export function updateConfirmationEmail(data: { name: string; rsvpSummary: RsvpD
       </tr>
     </table>
     
+    ${rsvpSummary.attending ? `
+    <!-- Event Details -->
+    ${eventDetailsSection()}
+    
+    <!-- Practical Info -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
+      <tr>
+        <td>
+          <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: ${colors.primary};">Praktisk informasjon</p>
+          <ul style="margin: 0; padding: 0 0 0 20px; font-size: 14px; color: ${colors.text}; line-height: 1.8;">
+            <li>Vennligst møt opp ved kirken senest kl. 12:15</li>
+            <li>Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet</li>
+            <li>Parkering er tilgjengelig på begge steder</li>
+          </ul>
+          <p style="margin: 12px 0 0;">
+            <a href="${baseUrl}/travel" style="font-size: 14px; color: ${colors.primary}; text-decoration: underline;">Se all informasjon om reise og overnatting →</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
+    
     <p style="margin: 24px 0 0; font-size: 14px; color: ${colors.textMuted};">
       Trenger du å gjøre flere endringer? Du kan be om en ny endringslenke fra <a href="${baseUrl}/rsvp" style="color: ${colors.primary}; text-decoration: underline;">svarsiden</a>.
     </p>
-  `, { preheader: `Svaret ditt er oppdatert.` });
+  `, { preheader: rsvpSummary.attending ? `Svaret ditt er oppdatert — vi gleder oss til å se deg!` : `Svaret ditt er oppdatert.` });
   
   const text = `Hei ${name},
 
-Svaret ditt er oppdatert.
+Svaret ditt er oppdatert${rsvpSummary.attending ? ' — vi gleder oss til å se deg!' : '.'}
 
 DITT OPPDATERTE SVAR
 -----------------
 Svar: ${rsvpSummary.attending ? 'Kommer' : 'Kan ikke komme'}
 ${rsvpSummary.notes ? `Melding: ${rsvpSummary.notes}` : ''}
+${rsvpSummary.attending ? `
+BRYLLUPET
+-----------
+${weddingConfig.date.full}
 
+Vielse kl. ${weddingConfig.ceremony.time}
+${weddingConfig.ceremony.nameNorwegian}
+${formatAddress(weddingConfig.ceremony)}
+Kart: ${weddingConfig.ceremony.mapsUrl}
+
+Feiring fra kl. ${weddingConfig.venue.time}
+${weddingConfig.venue.name}
+${formatAddress(weddingConfig.venue)}
+Kart: ${weddingConfig.venue.mapsUrl}
+
+PRAKTISK INFO
+--------------
+• Vennligst møt opp ved kirken senest kl. 12:15
+• Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet
+• Parkering er tilgjengelig på begge steder
+
+Mer info: ${baseUrl}/travel
+` : ''}
 Trenger du å gjøre flere endringer? Besøk: ${baseUrl}/rsvp
 
 Hilsen,
 ${weddingConfig.couple.emailSignature}`;
 
   return {
-    subject: `${weddingConfig.email.subjectPrefix} — Svar oppdatert`,
+    subject: `${weddingConfig.email.subjectPrefix} — ${rsvpSummary.attending ? 'Vi gleder oss til å se deg!' : 'Svar oppdatert'}`,
     html,
     text,
   };
