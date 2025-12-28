@@ -1,5 +1,6 @@
 import GalleryServer from "../components/GalleryServer";
 import HeroImageServer from "../components/HeroImageServer";
+import { Countdown } from "../components/Countdown";
 import Link from "next/link";
 
 export default async function Home() {
@@ -23,6 +24,14 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Countdown Section */}
+      <section className="text-center py-4">
+        <p className="text-sm uppercase tracking-widest text-warm-gray/70 mb-4">
+          Nedtelling til den store dagen
+        </p>
+        <Countdown targetDate="2026-07-03T14:00:00" />
+      </section>
+
       {/* Welcome Section */}
       <section className="text-center max-w-2xl mx-auto">
         <h2 className="font-serif text-3xl sm:text-4xl text-primary mb-6">Velkommen</h2>
@@ -40,7 +49,7 @@ export default async function Home() {
             </svg>
           </div>
           <h3 className="font-serif text-xl text-primary mb-2 group-hover:text-primary-dark transition-colors">Invitasjon</h3>
-          <p className="text-sm text-warm-gray">Gi beskjed om du kommer</p>
+          <p className="text-sm text-warm-gray">Svar innen 1. april</p>
         </Link>
         <Link href="/travel" className="card text-center group hover:shadow-md transition-shadow">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
