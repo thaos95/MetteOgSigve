@@ -68,18 +68,6 @@ export default function WishlistPage() {
           <WishlistCard key={wishlist.id} wishlist={wishlist} />
         ))}
       </div>
-
-      {/* Alternative Gift Note */}
-      <div className="mt-12 text-center">
-        <div className="card bg-cream/30 border-soft-border">
-          <h3 className="font-serif text-lg text-primary mb-2">Gaver utenom ønskelistene?</h3>
-          <p className="text-warm-gray text-sm">
-            Det viktigste for oss er at dere er med og feirer dagen vår. 
-            Om du heller vil gi noe annet enn det som står på ønskelistene, 
-            setter vi stor pris på det også.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

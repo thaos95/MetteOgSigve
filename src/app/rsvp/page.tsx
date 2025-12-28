@@ -8,6 +8,9 @@ export default function RSVPPage() {
         <p className="text-warm-gray text-lg">
           Vennligst gi oss beskjed om du kan komme og feire dagen med oss.
         </p>
+        <p className="text-warm-gray/80 text-sm mt-2">
+          Svar innen 1. april
+        </p>
       </div>
       <div className="card">
         <RSVPForm />
