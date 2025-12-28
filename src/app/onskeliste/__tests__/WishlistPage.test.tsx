@@ -57,10 +57,11 @@ describe('WishlistPage', () => {
     expect(screen.getByText(/kjøp og reservasjon skjer direkte hos leverandøren/i)).toBeInTheDocument();
   });
 
-  it('renders alternative gift note section', () => {
+  it('does not render unnecessary alternative gift note (Norwegian cultural norm)', () => {
     render(<WishlistPage />);
     
-    expect(screen.getByText(/gaver utenom ønskelistene/i)).toBeInTheDocument();
+    // Gift-giving is implicit in Norwegian culture - no need to explain alternatives
+    expect(screen.queryByText(/gaver utenom ønskelistene/i)).not.toBeInTheDocument();
   });
 
   it('renders external links with correct attributes', () => {
