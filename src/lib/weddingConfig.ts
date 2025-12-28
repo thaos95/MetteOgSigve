@@ -56,7 +56,35 @@ export const weddingConfig = {
     travel: '/travel',
     rsvp: '/rsvp',
     gallery: '/gallery',
+    wishlist: '/onskeliste',
   },
+
+  // External wishlist URLs
+  // These are vendor-hosted wishlists with their own quantity/purchase tracking
+  // DO NOT cache or duplicate wishlist state - always link directly to vendor
+  wishlists: [
+    {
+      id: 'tilbords',
+      name: 'Tilbords',
+      description: 'Servise og kjøkkenutstyr',
+      url: 'https://www.tilbords.no/min-side/onskelister/172091/',
+      logo: '/vendors/tilbords-logo.png', // Optional - can be null if not available
+    },
+    {
+      id: 'illumsbolighus',
+      name: 'Illums Bolighus',
+      description: 'Interiør og design',
+      url: 'https://www.illumsbolighus.no/onskeliste/andre?id=761fabb33f00e34b46fe2624ab',
+      logo: '/vendors/illums-logo.png',
+    },
+    {
+      id: 'kitchn',
+      name: 'Kitchn',
+      description: 'Kjøkkenutstyr',
+      url: 'https://www.kitchn.no/onskeliste/245134/',
+      logo: '/vendors/kitchn-logo.png',
+    },
+  ],
 
   // Email settings
   email: {
