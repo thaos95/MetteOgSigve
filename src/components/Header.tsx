@@ -4,6 +4,7 @@ export default function Header() {
   const links = [
     { href: "/", label: "Hjem" },
     { href: "/rsvp", label: "Invitasjon" },
+    { href: "/onskeliste", label: "Ønskeliste" },
     { href: "/gallery", label: "Galleri" },
     { href: "/travel", label: "Reise & Info" },
   ];

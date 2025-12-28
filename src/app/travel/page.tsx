@@ -331,7 +331,7 @@ export default function Travel() {
           Hvis du har spørsmål om reise, overnatting eller logistikk, ta gjerne kontakt med oss.
         </p>
         <p className="text-lg mb-4">Vi gleder oss til å feire med dere ❤️</p>
-        <a href="mailto:trygvesolberg95314@gmail.com" className="btn-secondary inline-flex">
+        <a href="mailto:metteogsigve@gmail.com" className="btn-secondary inline-flex">
           Ta kontakt
         </a>
       </section>
