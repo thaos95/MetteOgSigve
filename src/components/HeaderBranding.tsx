@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 /**
  * Header branding with scroll-aware behavior
@@ -9,6 +10,7 @@ import { useEffect, useState } from 'react';
  * - "Vi gifter oss" fades out on scroll for a cleaner, thinner nav
  * - Uses CSS transitions for smooth, subtle animation
  * - No layout shifts - uses opacity and height transition
+ * - Clickable to navigate to home page
  */
 export default function HeaderBranding() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -27,7 +29,7 @@ export default function HeaderBranding() {
   }, []);
 
   return (
-    <div className="min-w-0">
+    <Link href="/" className="min-w-0 hover:opacity-80 transition-opacity">
       <h1 className="font-serif text-2xl sm:text-3xl font-medium text-primary tracking-wide">
         Mette & Sigve
       </h1>
@@ -40,6 +42,6 @@ export default function HeaderBranding() {
       >
         Vi gifter oss
       </p>
-    </div>
+    </Link>
   );
 }

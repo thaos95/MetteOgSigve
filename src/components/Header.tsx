@@ -6,7 +6,7 @@ export default function Header() {
     { href: "/rsvp", label: "Invitasjon" },
     { href: "/onskeliste", label: "Ønskeliste" },
     { href: "/gallery", label: "Galleri" },
-    { href: "/travel", label: "Reise" },
+    { href: "/travel", label: "Reise & Info" },
   ];
 
   return (
