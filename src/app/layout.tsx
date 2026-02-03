@@ -1,6 +1,7 @@
 import "../../styles/globals.css";
 import Header from "../components/Header";
 import HeaderBranding from "../components/HeaderBranding";
+import MobileNav from "../components/MobileNav";
 
 export const metadata = {
   title: "Mette & Sigve",
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex items-center justify-between gap-4">
               <HeaderBranding />
               <Header />
+              <MobileNav />
             </div>
           </div>
         </header>
