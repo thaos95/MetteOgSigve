@@ -1,5 +1,6 @@
 import "../../styles/globals.css";
 import Header from "../components/Header";
+import HeaderBranding from "../components/HeaderBranding";
 
 export const metadata = {
   title: "Mette & Sigve",
@@ -11,12 +12,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="no">
       <body className="antialiased min-h-screen flex flex-col">
         <header className="border-b border-soft-border bg-white/80 backdrop-blur-sm sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-6 py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-medium text-primary tracking-wide">Mette & Sigve</h1>
-                <p className="text-sm text-warm-gray mt-0.5">Vi gifter oss</p>
-              </div>
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex items-center justify-between gap-4">
+              <HeaderBranding />
               <Header />
             </div>
           </div>
