@@ -248,6 +248,7 @@ export function verificationEmail(data: { name: string; verifyLink: string; rsvp
             <li>Vennligst møt opp ved kirken senest kl. 12:15</li>
             <li>Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet</li>
             <li>Parkering er tilgjengelig på begge steder</li>
+            <li>Stiletthæler er ikke tillatt – hælbredde skal være større enn en 1-krone</li>
           </ul>
           <p style="margin: 12px 0 0;">
             <a href="${baseUrl}/travel" style="font-size: 14px; color: ${colors.primary}; text-decoration: underline;">Se all informasjon om reise og overnatting →</a>
@@ -288,6 +289,7 @@ PRAKTISK INFO
 • Vennligst møt opp ved kirken senest kl. 12:15
 • Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet
 • Parkering er tilgjengelig på begge steder
+• Stiletthæler er ikke tillatt – hælbredde skal være større enn en 1-krone
 
 Mer info: ${baseUrl}/travel
 
@@ -355,6 +357,7 @@ export function confirmationEmail(data: { name: string; rsvpSummary: RsvpData })
             <li>Vennligst møt opp ved kirken senest kl. 12:15</li>
             <li>Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet</li>
             <li>Parkering er tilgjengelig på begge steder</li>
+            <li>Stiletthæler er ikke tillatt – hælbredde skal være større enn en 1-krone</li>
           </ul>
           <p style="margin: 12px 0 0;">
             <a href="${baseUrl}/travel" style="font-size: 14px; color: ${colors.primary}; text-decoration: underline;">Se all informasjon om reise og overnatting →</a>
@@ -398,6 +401,7 @@ PRAKTISK INFO
 • Vennligst møt opp ved kirken senest kl. 12:15
 • Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet
 • Parkering er tilgjengelig på begge steder
+• Stiletthæler er ikke tillatt – hælbredde skal være større enn en 1-krone
 
 Mer info: ${baseUrl}/travel
 ` : ''}
@@ -505,6 +509,7 @@ export function updateConfirmationEmail(data: { name: string; rsvpSummary: RsvpD
             <li>Vennligst møt opp ved kirken senest kl. 12:15</li>
             <li>Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet</li>
             <li>Parkering er tilgjengelig på begge steder</li>
+            <li>Stiletthæler er ikke tillatt – hælbredde skal være større enn en 1-krone</li>
           </ul>
           <p style="margin: 12px 0 0;">
             <a href="${baseUrl}/travel" style="font-size: 14px; color: ${colors.primary}; text-decoration: underline;">Se all informasjon om reise og overnatting →</a>
@@ -547,6 +552,7 @@ PRAKTISK INFO
 • Vennligst møt opp ved kirken senest kl. 12:15
 • Det tar ca. 30-35 minutter å kjøre fra kirken til festlokalet
 • Parkering er tilgjengelig på begge steder
+• Stiletthæler er ikke tillatt – hælbredde skal være større enn en 1-krone
 
 Mer info: ${baseUrl}/travel
 ` : ''}
